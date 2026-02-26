@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "673059035521",
+    "project_id": "almendra-a411d",
+    "storage_bucket": "almendra-a411d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:673059035521:android:0000000000000001",
+        "android_client_info": {
+          "package_name": "com.example.almendra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDO4sBYIDZlWsKTFrmUfgG1ZATkRbqumNE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
