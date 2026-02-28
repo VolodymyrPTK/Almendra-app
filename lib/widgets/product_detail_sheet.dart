@@ -86,52 +86,7 @@ class ProductDetailSheet extends StatelessWidget {
                       ),
                     ),
 
-                  // ── Brand & Category row ───────────────────────
-                  Row(
-                    children: [
-                      if (product.brand.isNotEmpty)
-                        _MetaChip(
-                          label: product.brand.toUpperCase(),
-                          color: accentGreen,
-                          isDark: isDark,
-                        ),
-                      if (product.category != null &&
-                          product.category!.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        _MetaChip(
-                          label: product.category!,
-                          color: subTextColor,
-                          isDark: isDark,
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // ── Product Name ───────────────────────────────
-                  Text(
-                    product.name,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: textColor,
-                      height: 1.15,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  // ── Price ──────────────────────────────────────
-                  Text(
-                    '${product.sellPrice.toStringAsFixed(0)} ₴',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: accentGreen,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ── Diet Tags ──────────────────────────────────
+                  // ── Diet Tags (under image) ────────────────────
                   if (product.dietTags.isNotEmpty) ...[
                     Wrap(
                       spacing: 8,
@@ -140,16 +95,46 @@ class ProductDetailSheet extends StatelessWidget {
                           .map((tag) => _DietTag(label: tag, isDark: isDark))
                           .toList(),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                   ],
+
+                  // ── Product Name (centered, reserved space) ─────
+                  Container(
+                    constraints: const BoxConstraints(minHeight: 60),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      product.name,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: textColor,
+                        height: 1.2,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Detail text (centered under name) ──────────
+                  if (product.detail.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        product.detail,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: subTextColor,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
 
                   // ── Nutrition Section ──────────────────────────
                   if (_hasNutrition) ...[
-                    _SectionTitle(
-                      title: 'Харчова цінність',
-                      textColor: textColor,
-                    ),
-                    const SizedBox(height: 12),
                     Row(
                       children: [
                         if (product.kcal != null)
@@ -194,24 +179,6 @@ class ProductDetailSheet extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       product.description!,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: subTextColor,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Divider(color: dividerColor, height: 1),
-                    const SizedBox(height: 20),
-                  ],
-
-                  // ── Detail (if different from description) ────
-                  if (product.detail.isNotEmpty &&
-                      product.detail != product.description) ...[
-                    _SectionTitle(title: 'Деталі', textColor: textColor),
-                    const SizedBox(height: 8),
-                    Text(
-                      product.detail,
                       style: TextStyle(
                         fontSize: 14,
                         color: subTextColor,
@@ -376,39 +343,6 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-// ── Meta Chip (Brand / Category) ───────────────────────────────
-
-class _MetaChip extends StatelessWidget {
-  const _MetaChip({
-    required this.label,
-    required this.color,
-    required this.isDark,
-  });
-  final String label;
-  final Color color;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(isDark ? 0.2 : 0.12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: color,
-          letterSpacing: 0.8,
-        ),
-      ),
-    );
-  }
-}
-
 // ── Diet Tag ───────────────────────────────────────────────────
 
 class _DietTag extends StatelessWidget {
@@ -423,6 +357,7 @@ class _DietTag extends StatelessWidget {
     'Gluten Free': Icons.grain_outlined,
     'Sugar Free': Icons.not_interested_outlined,
     'Lactose Free': Icons.water_drop_outlined,
+    'Keto': Icons.local_fire_department_outlined,
   };
 
   @override

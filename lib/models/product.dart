@@ -21,6 +21,7 @@ class Product {
   final bool isFreeGluten;
   final bool isFreeSugar;
   final bool isFreeLactosa;
+  final bool isKeto;
 
   const Product({
     required this.id,
@@ -43,10 +44,12 @@ class Product {
     this.isFreeGluten = false,
     this.isFreeSugar = false,
     this.isFreeLactosa = false,
+    this.isKeto = false,
   });
 
   factory Product.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final raw = doc.data();
+    final data = (raw is Map<String, dynamic>) ? raw : <String, dynamic>{};
     return Product(
       id: doc.id,
       name: data['name']?.toString() ?? '',
@@ -68,6 +71,7 @@ class Product {
       isFreeGluten: _toBool(data['isFreeGluten']),
       isFreeSugar: _toBool(data['isFreeSugar']),
       isFreeLactosa: _toBool(data['isFreeLactosa']),
+      isKeto: _toBool(data['isKeto']),
     );
   }
 
@@ -81,7 +85,8 @@ class Product {
   static bool _toBool(dynamic value) {
     if (value == null) return false;
     if (value is bool) return value;
-    if (value is String) return value.toLowerCase() == 'true';
+    if (value is int) return value != 0;
+    if (value is String) return value.toLowerCase() == 'true' || value == '1';
     return false;
   }
 
@@ -94,6 +99,7 @@ class Product {
     if (isFreeGluten) tags.add('Gluten Free');
     if (isFreeSugar) tags.add('Sugar Free');
     if (isFreeLactosa) tags.add('Lactose Free');
+    if (isKeto) tags.add('Keto');
     return tags;
   }
 }
