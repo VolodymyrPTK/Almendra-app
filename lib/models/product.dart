@@ -65,13 +65,13 @@ class Product {
       fat: _toNum(data['fat']),
       protein: _toNum(data['protein']),
       carbo: _toNum(data['carbo']),
-      isVegan: _toBool(data['isVegan']),
-      isProteinik: _toBool(data['isProteinik']),
-      isLowCarbo: _toBool(data['isLowCarbo']),
-      isFreeGluten: _toBool(data['isFreeGluten']),
-      isFreeSugar: _toBool(data['isFreeSugar']),
-      isFreeLactosa: _toBool(data['isFreeLactosa']),
-      isKeto: _toBool(data['isKeto']),
+      isVegan: _toBool(data['isVegan'] ?? data['vegan']),
+      isProteinik: _toBool(data['isProteinik'] ?? data['proteinik']),
+      isLowCarbo: _toBool(data['isLowCarbo'] ?? data['lowCarbo']),
+      isFreeGluten: _toBool(data['isFreeGluten'] ?? data['freeGluten']),
+      isFreeSugar: _toBool(data['isFreeSugar'] ?? data['freeSugar']),
+      isFreeLactosa: _toBool(data['isFreeLactosa'] ?? data['freeLactosa']),
+      isKeto: _toBool(data['isKeto'] ?? data['keto']),
     );
   }
 
@@ -93,13 +93,13 @@ class Product {
   /// Collect all active diet tags into a list of labels
   List<String> get dietTags {
     final tags = <String>[];
-    if (isVegan) tags.add('Vegan');
-    if (isProteinik) tags.add('Protein');
-    if (isLowCarbo) tags.add('Low Carb');
-    if (isFreeGluten) tags.add('Gluten Free');
-    if (isFreeSugar) tags.add('Sugar Free');
-    if (isFreeLactosa) tags.add('Lactose Free');
-    if (isKeto) tags.add('Keto');
+    if (isVegan) tags.add('Веган');
+    if (isProteinik) tags.add('Протеїн');
+    if (isLowCarbo) tags.add('Низьковуглеводний');
+    if (isFreeGluten) tags.add('Без глютену');
+    if (isFreeSugar) tags.add('Без цукру');
+    if (isFreeLactosa) tags.add('Без лактози');
+    if (isKeto) tags.add('Кето');
     return tags;
   }
 }

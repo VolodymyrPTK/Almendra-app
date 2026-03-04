@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart' as ap;
 import '../providers/products_provider.dart';
+import '../widgets/auth_sheet.dart';
 import '../widgets/product_card.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -36,13 +38,85 @@ class _ProductsScreenState extends State<ProductsScreen> {
     super.dispose();
   }
 
+  void _showUserMenu(BuildContext context, ap.AuthProvider auth) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1E1A17) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF3B3228);
+    final subText = isDark ? Colors.white60 : const Color(0xFF7A6F63);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        padding: EdgeInsets.fromLTRB(
+            24, 16, 24, MediaQuery.of(context).padding.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: subText.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Icon(Icons.person_outline_rounded,
+                size: 48, color: const Color(0xFF8CAF7B)),
+            const SizedBox(height: 8),
+            Text(
+              auth.user?.displayName ??
+                  auth.user?.email ??
+                  'Користувач',
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: textColor),
+            ),
+            if (auth.user?.email != null) ...[
+              const SizedBox(height: 4),
+              Text(auth.user!.email!,
+                  style: TextStyle(fontSize: 13, color: subText)),
+            ],
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  auth.signOut();
+                  Navigator.pop(context);
+                },
+                icon: const Icon(Icons.logout_rounded, size: 18),
+                label: const Text('Вийти'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red[400],
+                  side: BorderSide(
+                      color: Colors.red.withValues(alpha: 0.4)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(
-          'Almendra. \nCollection',
+          'Almendra',
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 26,
@@ -53,6 +127,53 @@ class _ProductsScreenState extends State<ProductsScreen> {
         centerTitle: false,
         elevation: 0,
         backgroundColor: Colors.transparent,
+        actions: [
+          Consumer<ap.AuthProvider>(
+            builder: (context, auth, _) {
+              final isDark =
+                  Theme.of(context).brightness == Brightness.dark;
+              final bg = isDark
+                  ? const Color(0xFF302B26)
+                  : const Color(0xFFF3EDE5);
+              final fg = isDark
+                  ? Colors.white70
+                  : const Color(0xFF5A5047);
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: GestureDetector(
+                  onTap: () => auth.isLoggedIn
+                      ? _showUserMenu(context, auth)
+                      : AuthSheet.show(context),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: bg,
+                    ),
+                    child: auth.isLoggedIn
+                        ? Center(
+                            child: Text(
+                              (auth.user!.displayName?.isNotEmpty == true
+                                      ? auth.user!.displayName!
+                                      : auth.user!.email ?? '?')[0]
+                                  .toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: fg,
+                              ),
+                            ),
+                          )
+                        : Icon(Icons.person_outline_rounded,
+                            size: 22, color: fg),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
         flexibleSpace: ClipRRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),

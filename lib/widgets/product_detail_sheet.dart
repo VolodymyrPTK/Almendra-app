@@ -1,8 +1,10 @@
+import 'dart:math';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 
-class ProductDetailSheet extends StatelessWidget {
+class ProductDetailSheet extends StatefulWidget {
   const ProductDetailSheet({super.key, required this.product});
   final Product product;
 
@@ -13,6 +15,30 @@ class ProductDetailSheet extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => ProductDetailSheet(product: product),
     );
+  }
+
+  @override
+  State<ProductDetailSheet> createState() => _ProductDetailSheetState();
+}
+
+class _ProductDetailSheetState extends State<ProductDetailSheet>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _floatCtrl;
+  Product get product => widget.product;
+
+  @override
+  void initState() {
+    super.initState();
+    _floatCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _floatCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -62,33 +88,68 @@ class ProductDetailSheet extends StatelessWidget {
                 controller: scrollCtrl,
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
                 children: [
-                  // ── Hero Image ─────────────────────────────────
+                  // ── Hero Image with Comic Tag Bubbles ──────────
                   if (product.imageUrl != null)
-                    Container(
+                    SizedBox(
                       height: 260,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        color: chipBg,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: CachedNetworkImage(
-                        imageUrl: product.imageUrl!,
-                        fit: BoxFit.contain,
-                        placeholder: (_, __) => const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        errorWidget: (_, __, ___) => Icon(
-                          Icons.image_not_supported_outlined,
-                          size: 48,
-                          color: subTextColor.withOpacity(0.3),
-                        ),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Image
+                          Positioned.fill(
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 0),
+                              clipBehavior: Clip.antiAlias,
+                              decoration: BoxDecoration(
+                                color: chipBg,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: CachedNetworkImage(
+                                imageUrl: product.imageUrl!,
+                                fit: BoxFit.contain,
+                                placeholder: (_, __) => const Center(
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                ),
+                                errorWidget: (_, __, ___) => Icon(
+                                  Icons.image_not_supported_outlined,
+                                  size: 48,
+                                  color: subTextColor.withOpacity(0.3),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Animated comic bubbles on sides
+                          ...List.generate(product.dietTags.length, (i) {
+                            final tag = product.dietTags[i];
+                            final isLeft = i % 2 == 0;
+                            final count = product.dietTags.length;
+                            final topOffset = count > 1
+                                ? 20.0 + i * (200.0 - 20.0) / (count - 1)
+                                : 110.0;
+                            return Positioned(
+                              top: topOffset,
+                              left: isLeft ? -10 : null,
+                              right: isLeft ? null : -10,
+                              child: _AnimatedBubble(
+                                animation: _floatCtrl,
+                                phase: i * 0.9,
+                                label: tag,
+                                tailRight: isLeft,
+                                chipBg: Colors.white,
+                                chipText: const Color(0xFF3B3228),
+                              ),
+                            );
+                          }),
+                        ],
                       ),
                     ),
+                  const SizedBox(height: 20),
 
-                  // ── Diet Tags (under image) ────────────────────
-                  if (product.dietTags.isNotEmpty) ...[
+                  // ── Diet Tags fallback (no image) ──────────────
+                  if (product.imageUrl == null && product.dietTags.isNotEmpty) ...[
                     Wrap(
+                      alignment: WrapAlignment.center,
                       spacing: 8,
                       runSpacing: 8,
                       children: product.dietTags
@@ -190,13 +251,12 @@ class ProductDetailSheet extends StatelessWidget {
                     const SizedBox(height: 20),
                   ],
 
-                  // ── Vitamins Section ──────────────────────────
-                  if (product.vitamins != null &&
-                      product.vitamins!.isNotEmpty) ...[
-                    _SectionTitle(title: 'Вітаміни', textColor: textColor),
+                  // ── Sklad (Ingredients / Composition) ─────────
+                  if (product.sklad != null && product.sklad!.isNotEmpty) ...[
+                    _SectionTitle(title: 'Склад', textColor: textColor),
                     const SizedBox(height: 8),
                     Text(
-                      product.vitamins!,
+                      product.sklad!,
                       style: TextStyle(
                         fontSize: 14,
                         color: subTextColor,
@@ -208,12 +268,13 @@ class ProductDetailSheet extends StatelessWidget {
                     const SizedBox(height: 20),
                   ],
 
-                  // ── Sklad (Ingredients / Composition) ─────────
-                  if (product.sklad != null && product.sklad!.isNotEmpty) ...[
-                    _SectionTitle(title: 'Склад', textColor: textColor),
+                  // ── Vitamins Section ──────────────────────────
+                  if (product.vitamins != null &&
+                      product.vitamins!.isNotEmpty) ...[
+                    _SectionTitle(title: 'Вітаміни', textColor: textColor),
                     const SizedBox(height: 8),
                     Text(
-                      product.sklad!,
+                      product.vitamins!,
                       style: TextStyle(
                         fontSize: 14,
                         color: subTextColor,
@@ -351,13 +412,13 @@ class _DietTag extends StatelessWidget {
   final bool isDark;
 
   static const _tagIcons = {
-    'Vegan': Icons.eco_outlined,
-    'Protein': Icons.fitness_center_outlined,
-    'Low Carb': Icons.trending_down_outlined,
-    'Gluten Free': Icons.grain_outlined,
-    'Sugar Free': Icons.not_interested_outlined,
-    'Lactose Free': Icons.water_drop_outlined,
-    'Keto': Icons.local_fire_department_outlined,
+    'Веган': Icons.eco_outlined,
+    'Протеїн': Icons.fitness_center_outlined,
+    'Низьковуглеводний': Icons.trending_down_outlined,
+    'Без глютену': Icons.grain_outlined,
+    'Без цукру': Icons.not_interested_outlined,
+    'Без лактози': Icons.water_drop_outlined,
+    'Кето': Icons.local_fire_department_outlined,
   };
 
   @override
@@ -389,6 +450,123 @@ class _DietTag extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Animated Comic Bubble ──────────────────────────────────────
+
+class _AnimatedBubble extends StatelessWidget {
+  const _AnimatedBubble({
+    required this.animation,
+    required this.phase,
+    required this.label,
+    required this.tailRight,
+    required this.chipBg,
+    required this.chipText,
+  });
+
+  final Animation<double> animation;
+  final double phase;
+  final String label;
+  final bool tailRight; // tail points right = bubble floats on left side
+  final Color chipBg;
+  final Color chipText;
+
+  static const _tagIcons = {
+    'Веган': Icons.eco_outlined,
+    'Протеїн': Icons.fitness_center_outlined,
+    'Низьковуглеводний': Icons.trending_down_outlined,
+    'Без глютену': Icons.grain_outlined,
+    'Без цукру': Icons.not_interested_outlined,
+    'Без лактози': Icons.water_drop_outlined,
+    'Кето': Icons.local_fire_department_outlined,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = _tagIcons[label] ?? Icons.label_outline;
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (_, child) {
+        final dy = sin(animation.value * 2 * pi + phase) * 4.0;
+        return Transform.translate(offset: Offset(0, dy), child: child);
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: chipBg,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.14),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 13, color: chipText),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: chipText,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Triangle tail pointing toward the image
+          Positioned(
+            right: tailRight ? -7 : null,
+            left: tailRight ? null : -7,
+            top: 8,
+            child: CustomPaint(
+              size: const Size(8, 12),
+              painter: _TrianglePainter(color: chipBg, pointRight: tailRight),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Triangle Tail Painter ──────────────────────────────────────
+
+class _TrianglePainter extends CustomPainter {
+  const _TrianglePainter({required this.color, required this.pointRight});
+  final Color color;
+  final bool pointRight;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final path = Path();
+    if (pointRight) {
+      path.moveTo(0, 0);
+      path.lineTo(size.width, size.height / 2);
+      path.lineTo(0, size.height);
+    } else {
+      path.moveTo(size.width, 0);
+      path.lineTo(0, size.height / 2);
+      path.lineTo(size.width, size.height);
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_TrianglePainter old) =>
+      old.color != color || old.pointRight != pointRight;
 }
 
 // ── Nutrition Circle ───────────────────────────────────────────
