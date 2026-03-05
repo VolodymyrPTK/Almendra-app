@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -38,8 +39,12 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> signUpWithEmail(String email, String password) async {
     _setLoading();
     try {
-      await _auth.createUserWithEmailAndPassword(
+      final credential = await _auth.createUserWithEmailAndPassword(
           email: email.trim(), password: password);
+      await FirebaseFirestore.instance
+          .collection('profiles')
+          .doc(credential.user!.uid)
+          .set({'email': credential.user!.email});
       _setSuccess();
       return true;
     } on FirebaseAuthException catch (e) {

@@ -2,18 +2,25 @@ import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/product.dart';
+import '../providers/cart_provider.dart';
+import 'auth_sheet.dart';
 
 class ProductDetailSheet extends StatefulWidget {
   const ProductDetailSheet({super.key, required this.product});
   final Product product;
 
   static void show(BuildContext context, Product product) {
+    final cart = context.read<CartProvider>();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ProductDetailSheet(product: product),
+      builder: (_) => ChangeNotifierProvider.value(
+        value: cart,
+        child: ProductDetailSheet(product: product),
+      ),
     );
   }
 
@@ -328,7 +335,55 @@ class _ProductDetailSheetState extends State<ProductDetailSheet>
                   // Add to Cart Button
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
+                      onTap: () async {
+                        final cart = context.read<CartProvider>();
+                        try {
+                          final added = await cart.addToCart(product);
+                          if (!added) {
+                            // Not logged in — show auth sheet
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              AuthSheet.show(context);
+                            }
+                            return;
+                          }
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${product.name} додано в кошик',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600),
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: const Color(0xFF8CAF7B),
+                                duration: const Duration(seconds: 2),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                                margin:
+                                    const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          debugPrint('addToCart error: $e');
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Помилка: $e'),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: Colors.red[700],
+                                duration: const Duration(seconds: 4),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                                margin:
+                                    const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                              ),
+                            );
+                          }
+                        }
+                      },
                       child: Container(
                         height: 52,
                         decoration: BoxDecoration(

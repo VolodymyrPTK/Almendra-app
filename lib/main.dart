@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart' as ap;
+import 'providers/cart_provider.dart';
 import 'providers/products_provider.dart';
 import 'screens/products_screen.dart';
 
@@ -27,6 +28,7 @@ class AlmendraApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ProductsProvider()),
         ChangeNotifierProvider(create: (_) => ap.AuthProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
       ],
       child: MaterialApp(
         title: 'Almendra',

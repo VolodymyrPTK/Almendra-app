@@ -2,8 +2,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart' as ap;
+import '../providers/cart_provider.dart';
 import '../providers/products_provider.dart';
 import '../widgets/auth_sheet.dart';
+import '../widgets/cart_sheet.dart';
 import '../widgets/product_card.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -128,6 +130,63 @@ class _ProductsScreenState extends State<ProductsScreen> {
         elevation: 0,
         backgroundColor: Colors.transparent,
         actions: [
+          // Cart button
+          Consumer<CartProvider>(
+            builder: (context, cart, _) {
+              final isDark =
+                  Theme.of(context).brightness == Brightness.dark;
+              final bg = isDark
+                  ? const Color(0xFF302B26)
+                  : const Color(0xFFF3EDE5);
+              final fg = isDark
+                  ? Colors.white70
+                  : const Color(0xFF5A5047);
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => CartSheet.show(context),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle, color: bg),
+                        child: Icon(Icons.shopping_bag_outlined,
+                            size: 22, color: fg),
+                      ),
+                      if (cart.itemCount > 0)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            width: 17,
+                            height: 17,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF8CAF7B),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                cart.itemCount > 9
+                                    ? '9+'
+                                    : '${cart.itemCount}',
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
           Consumer<ap.AuthProvider>(
             builder: (context, auth, _) {
               final isDark =

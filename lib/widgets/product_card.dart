@@ -1,7 +1,10 @@
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/product.dart';
+import '../providers/cart_provider.dart';
+import 'auth_sheet.dart';
 import 'product_detail_sheet.dart';
 
 class ProductCard extends StatefulWidget {
@@ -40,21 +43,34 @@ class _ProductCardState extends State<ProductCard>
   Future<void> _onAddToCart() async {
     await _pressCtrl.forward();
     await _pressCtrl.reverse();
-    setState(() => _added = true);
     if (!mounted) return;
 
-    // Pulse feedback or snackbar
+    final cart = context.read<CartProvider>();
+    final added = await cart.addToCart(widget.product);
+
+    if (!mounted) return;
+    if (!added) {
+      // not logged in
+      AuthSheet.show(context);
+      return;
+    }
+
+    setState(() => _added = true);
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('«${widget.product.name}» додано'),
+        content: Text(
+          '«${widget.product.name}» додано в кошик',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 1),
-        margin: const EdgeInsets.only(bottom: 100, left: 20, right: 20),
+        backgroundColor: const Color(0xFF8CAF7B),
+        duration: const Duration(seconds: 2),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       ),
     );
-
-    // Reset after some time for demo purposes if needed, or keep as added
   }
 
   @override
