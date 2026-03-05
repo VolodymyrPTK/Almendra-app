@@ -141,47 +141,45 @@ class _ProductsScreenState extends State<ProductsScreen> {
               final fg = isDark
                   ? Colors.white70
                   : const Color(0xFF5A5047);
+              final hasItems = cart.itemCount > 0;
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: GestureDetector(
                   onTap: () => CartSheet.show(context),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                            shape: BoxShape.circle, color: bg),
-                        child: Icon(Icons.shopping_bag_outlined,
-                            size: 22, color: fg),
-                      ),
-                      if (cart.itemCount > 0)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            width: 17,
-                            height: 17,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF8CAF7B),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                cart.itemCount > 9
-                                    ? '9+'
-                                    : '${cart.itemCount}',
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    height: 40,
+                    padding: EdgeInsets.symmetric(
+                        horizontal: hasItems ? 14 : 0),
+                    constraints: BoxConstraints(
+                        minWidth: 40,
+                        maxWidth: hasItems ? 130 : 40),
+                    decoration: BoxDecoration(
+                      color: hasItems
+                          ? const Color(0xFF8CAF7B)
+                          : bg,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.shopping_bag_outlined,
+                            size: 20,
+                            color: hasItems ? Colors.white : fg),
+                        if (hasItems) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            '${cart.total.toStringAsFixed(0)} грн',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
                             ),
                           ),
-                        ),
-                    ],
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               );
