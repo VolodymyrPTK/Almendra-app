@@ -6,6 +6,7 @@ import '../providers/cart_provider.dart';
 import '../providers/products_provider.dart';
 import '../widgets/auth_sheet.dart';
 import '../widgets/cart_sheet.dart';
+import '../widgets/custom_bottom_bar.dart';
 import '../widgets/product_card.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -52,11 +53,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
       builder: (_) => Container(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(32)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         ),
         padding: EdgeInsets.fromLTRB(
-            24, 16, 24, MediaQuery.of(context).padding.bottom + 24),
+          24,
+          16,
+          24,
+          MediaQuery.of(context).padding.bottom + 24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -69,22 +73,26 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Icon(Icons.person_outline_rounded,
-                size: 48, color: const Color(0xFF8CAF7B)),
+            Icon(
+              Icons.person_outline_rounded,
+              size: 48,
+              color: const Color(0xFF8CAF7B),
+            ),
             const SizedBox(height: 8),
             Text(
-              auth.user?.displayName ??
-                  auth.user?.email ??
-                  'Користувач',
+              auth.user?.displayName ?? auth.user?.email ?? 'Користувач',
               style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: textColor),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: textColor,
+              ),
             ),
             if (auth.user?.email != null) ...[
               const SizedBox(height: 4),
-              Text(auth.user!.email!,
-                  style: TextStyle(fontSize: 13, color: subText)),
+              Text(
+                auth.user!.email!,
+                style: TextStyle(fontSize: 13, color: subText),
+              ),
             ],
             const SizedBox(height: 24),
             SizedBox(
@@ -99,10 +107,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 label: const Text('Вийти'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.red[400],
-                  side: BorderSide(
-                      color: Colors.red.withValues(alpha: 0.4)),
+                  side: BorderSide(color: Colors.red.withValues(alpha: 0.4)),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
@@ -133,52 +141,83 @@ class _ProductsScreenState extends State<ProductsScreen> {
           // Cart button
           Consumer<CartProvider>(
             builder: (context, cart, _) {
-              final isDark =
-                  Theme.of(context).brightness == Brightness.dark;
-              final bg = isDark
-                  ? const Color(0xFF302B26)
-                  : const Color(0xFFF3EDE5);
-              final fg = isDark
-                  ? Colors.white70
-                  : const Color(0xFF5A5047);
+              final isDark = Theme.of(context).brightness == Brightness.dark;
               final hasItems = cart.itemCount > 0;
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: GestureDetector(
                   onTap: () => CartSheet.show(context),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    height: 40,
-                    padding: EdgeInsets.symmetric(
-                        horizontal: hasItems ? 14 : 0),
-                    constraints: BoxConstraints(
-                        minWidth: 40,
-                        maxWidth: hasItems ? 130 : 40),
+                  child: Container(
                     decoration: BoxDecoration(
-                      color: hasItems
-                          ? const Color(0xFF8CAF7B)
-                          : bg,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(100),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.shopping_bag_outlined,
-                            size: 20,
-                            color: hasItems ? Colors.white : fg),
-                        if (hasItems) ...[
-                          const SizedBox(width: 6),
-                          Text(
-                            '${cart.total.toStringAsFixed(0)} грн',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(100),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          height: 40,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: hasItems ? 14 : 0,
+                          ),
+                          constraints: BoxConstraints(
+                            minWidth: 40,
+                            maxWidth: hasItems ? 130 : 40,
+                          ),
+                          decoration: BoxDecoration(
+                            color: hasItems
+                                ? const Color(0xFF8CAF7B).withValues(alpha: 0.7)
+                                : (isDark
+                                      ? Colors.white.withValues(alpha: 0.1)
+                                      : Colors.white.withValues(alpha: 0.7)),
+                            borderRadius: BorderRadius.circular(100),
+                            border: Border.all(
+                              color: hasItems
+                                  ? const Color(
+                                      0xFF8CAF7B,
+                                    ).withValues(alpha: 0.9)
+                                  : (isDark
+                                        ? Colors.white.withValues(alpha: 0.2)
+                                        : Colors.white.withValues(alpha: 0.9)),
+                              width: 1.5,
                             ),
                           ),
-                        ],
-                      ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.shopping_bag_outlined,
+                                size: 20,
+                                color: hasItems
+                                    ? Colors.white
+                                    : (isDark
+                                          ? Colors.white
+                                          : const Color(0xFF3B3228)),
+                              ),
+                              if (hasItems) ...[
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${cart.total.toStringAsFixed(0)} грн',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -187,14 +226,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ),
           Consumer<ap.AuthProvider>(
             builder: (context, auth, _) {
-              final isDark =
-                  Theme.of(context).brightness == Brightness.dark;
-              final bg = isDark
-                  ? const Color(0xFF302B26)
-                  : const Color(0xFFF3EDE5);
-              final fg = isDark
-                  ? Colors.white70
-                  : const Color(0xFF5A5047);
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              final textColor = isDark ? Colors.white : const Color(0xFF3B3228);
 
               return Padding(
                 padding: const EdgeInsets.only(right: 16),
@@ -203,28 +236,57 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       ? _showUserMenu(context, auth)
                       : AuthSheet.show(context),
                   child: Container(
-                    width: 40,
-                    height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: bg,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: auth.isLoggedIn
-                        ? Center(
-                            child: Text(
-                              (auth.user!.displayName?.isNotEmpty == true
-                                      ? auth.user!.displayName!
-                                      : auth.user!.email ?? '?')[0]
-                                  .toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: fg,
-                              ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(100),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.white.withValues(alpha: 0.7),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.2)
+                                  : Colors.white.withValues(alpha: 0.9),
+                              width: 1.5,
                             ),
-                          )
-                        : Icon(Icons.person_outline_rounded,
-                            size: 22, color: fg),
+                          ),
+                          child: auth.isLoggedIn
+                              ? Center(
+                                  child: Text(
+                                    (auth.user!.displayName?.isNotEmpty == true
+                                            ? auth.user!.displayName!
+                                            : auth.user!.email ?? '?')[0]
+                                        .toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: textColor,
+                                    ),
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.person_outline_rounded,
+                                  size: 22,
+                                  color: textColor,
+                                ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               );
@@ -233,11 +295,21 @@ class _ProductsScreenState extends State<ProductsScreen> {
         ],
         flexibleSpace: ClipRRect(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
-              color: Theme.of(
-                context,
-              ).colorScheme.surface.withValues(alpha: 0.4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.white.withValues(alpha: 0.4),
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.white.withValues(alpha: 0.5),
+                    width: 1.5,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -351,6 +423,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
               },
             ),
           ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: CustomBottomBar(),
+          ),
         ],
       ),
     );
@@ -385,7 +463,7 @@ class _ProductList extends StatelessWidget {
       onRefresh: provider.loadProducts,
       child: GridView.builder(
         controller: scrollController,
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           mainAxisSpacing: 14,
