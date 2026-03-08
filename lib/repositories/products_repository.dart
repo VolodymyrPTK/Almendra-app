@@ -35,14 +35,14 @@ class ProductsRepository {
     return _mapSnapshot(snapshot);
   }
 
-  static List<Product>? _cachedAllProducts;
+  static List<Product>? _productCache;
 
   /// Fetches products matching search query.
   Future<List<Product>> fetchSearchResults(String query) async {
     // If not cached, fetch all products once to allow true substring search
-    if (_cachedAllProducts == null) {
+    if (_productCache == null) {
       final snapshot = await _collection.get(const GetOptions(source: Source.serverAndCache));
-      _cachedAllProducts = snapshot.docs.map(Product.fromFirestore).toList();
+      _productCache = snapshot.docs.map(Product.fromFirestore).toList();
     }
 
     final lowerQuery = query.toLowerCase();
@@ -53,7 +53,7 @@ class ProductsRepository {
     final categoryMatches = <Product>[];
     final skladMatches = <Product>[];
 
-    for (final p in _cachedAllProducts!) {
+    for (final p in _productCache!) {
       final nameLower = p.name.toLowerCase();
       final brandLower = p.brand.toLowerCase();
       final detailLower = p.detail.toLowerCase();
@@ -73,13 +73,18 @@ class ProductsRepository {
       }
     }
 
-    return [
+    final allMatches = [
       ...nameMatches,
       ...brandMatches,
       ...detailMatches,
       ...categoryMatches,
       ...skladMatches,
     ];
+
+    final inStock = allMatches.where((p) => !p.outOfStock);
+    final outOfStock = allMatches.where((p) => p.outOfStock);
+
+    return [...inStock, ...outOfStock];
   }
 
   ({List<Product> products, DocumentSnapshot? lastDoc}) _mapSnapshot(

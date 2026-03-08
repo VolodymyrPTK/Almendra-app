@@ -21,10 +21,11 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
   Timer? _debounce;
   List<Product> _searchResults = [];
   bool _isLoading = false;
-  
+
   final ScrollController _scrollController = ScrollController();
   int _displayLimit = 15;
-  List<Product> get _displayedResults => _searchResults.take(_displayLimit).toList();
+  List<Product> get _displayedResults =>
+      _searchResults.take(_displayLimit).toList();
 
   @override
   void initState() {
@@ -34,7 +35,8 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 50) {
       if (_displayLimit < _searchResults.length) {
         setState(() {
           _displayLimit += 15;
@@ -185,7 +187,7 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
     final fgColor = isDark ? Colors.white : Colors.black87;
 
     return Container(
-      constraints: const BoxConstraints(maxHeight: 250),
+      constraints: const BoxConstraints(maxHeight: 290),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.black.withValues(alpha: 0.6)
@@ -198,10 +200,18 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
           width: 1.5,
         ),
         boxShadow: [
+          // Gentle shadow upwards for separation from bottom bar
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, -5),
+          ),
+          // Deep drop shadow downwards to make it float
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 30,
+            spreadRadius: 5,
+            offset: const Offset(0, 15),
           ),
         ],
       ),
@@ -271,13 +281,38 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      subtitle: Text(
-                        '${product.sellPrice.toStringAsFixed(0)} ₴',
-                        style: TextStyle(
-                          color: fgColor.withValues(alpha: 0.6),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                        ),
+                      subtitle: Row(
+                        children: [
+                          Text(
+                            '${product.sellPrice.toStringAsFixed(0)} ₴',
+                            style: TextStyle(
+                              color: fgColor.withValues(alpha: 0.6),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
+                          ),
+                          if (product.outOfStock) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'Немає в наявності',
+                                style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       onTap: () {
                         ProductDetailSheet.show(context, product);

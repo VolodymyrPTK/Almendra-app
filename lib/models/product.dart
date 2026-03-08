@@ -22,6 +22,7 @@ class Product {
   final bool isFreeSugar;
   final bool isFreeLactosa;
   final bool isKeto;
+  final bool outOfStock;
 
   const Product({
     required this.id,
@@ -45,6 +46,7 @@ class Product {
     this.isFreeSugar = false,
     this.isFreeLactosa = false,
     this.isKeto = false,
+    this.outOfStock = false,
   });
 
   factory Product.fromFirestore(DocumentSnapshot doc) {
@@ -72,6 +74,7 @@ class Product {
       isFreeSugar: _toBool(data['isFreeSugar'] ?? data['freeSugar']),
       isFreeLactosa: _toBool(data['isFreeLactosa'] ?? data['freeLactosa']),
       isKeto: _toBool(data['isKeto'] ?? data['keto']),
+      outOfStock: _toBool(data['outOfStock'] ?? data['isOutOfStock']),
     );
   }
 
