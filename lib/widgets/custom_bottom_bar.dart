@@ -100,7 +100,12 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        padding: const EdgeInsets.only(
+          left: 16.0,
+          right: 16.0,
+          top: 16.0,
+          bottom: 2.0, // Reduced bottom padding to move buttons lower
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -110,8 +115,9 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
               _buildSearchResults(isDark),
 
             if (_isSearchExpanded && (_searchResults.isNotEmpty || _isLoading))
-              const SizedBox(height: 12),
-
+              const SizedBox(
+                height: 6,
+              ), // Made space between dropdown and input smaller
             // Bottom Bar Row
             Row(
               children: [
@@ -187,7 +193,7 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
     final fgColor = isDark ? Colors.white : Colors.black87;
 
     return Container(
-      constraints: const BoxConstraints(maxHeight: 290),
+      constraints: const BoxConstraints(maxHeight: 270),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.black.withValues(alpha: 0.6)
@@ -200,18 +206,10 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
           width: 1.5,
         ),
         boxShadow: [
-          // Gentle shadow upwards for separation from bottom bar
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-          // Deep drop shadow downwards to make it float
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 30,
-            spreadRadius: 5,
-            offset: const Offset(0, 15),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -224,50 +222,61 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                   padding: EdgeInsets.all(24.0),
                   child: Center(child: CircularProgressIndicator()),
                 )
-              : ListView.separated(
+              : RawScrollbar(
                   controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  shrinkWrap: true,
-                  // The prompt asks to have the first result at the bottom
-                  reverse: true,
-                  itemCount: _displayedResults.length,
-                  separatorBuilder: (context, index) =>
-                      Divider(height: 1, color: fgColor.withValues(alpha: 0.1)),
-                  itemBuilder: (context, index) {
+                  thumbVisibility: true,
+                  thumbColor: fgColor.withValues(alpha: 0.3),
+                  radius: const Radius.circular(8),
+                  thickness: 4,
+                  mainAxisMargin: 12,
+                  crossAxisMargin: 6,
+                  child: ListView.separated(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shrinkWrap: true,
+                    // The prompt asks to have the first result at the bottom
+                    reverse: true,
+                    itemCount: _displayedResults.length,
+                    separatorBuilder: (context, index) =>
+                        Divider(height: 1, color: fgColor.withValues(alpha: 0.1)),
+                    itemBuilder: (context, index) {
                     final product = _displayedResults[index];
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 20,
-                        vertical: 4,
+                        vertical: 0,
                       ),
+                      visualDensity: const VisualDensity(vertical: -2),
                       leading: product.imageUrl != null
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: CachedNetworkImage(
                                 imageUrl: product.imageUrl!,
-                                width: 40,
-                                height: 40,
+                                width: 50,
+                                height: 50,
                                 fit: BoxFit.cover,
                                 placeholder: (_, __) => Container(
-                                  width: 40,
-                                  height: 40,
+                                  width: 50,
+                                  height: 50,
                                   color: fgColor.withValues(alpha: 0.1),
                                 ),
                                 errorWidget: (_, __, ___) => Icon(
                                   Icons.fastfood_rounded,
+                                  size: 28,
                                   color: fgColor.withValues(alpha: 0.3),
                                 ),
                               ),
                             )
                           : Container(
-                              width: 40,
-                              height: 40,
+                              width: 50,
+                              height: 50,
                               decoration: BoxDecoration(
                                 color: fgColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
                                 Icons.fastfood_rounded,
+                                size: 28,
                                 color: fgColor.withValues(alpha: 0.3),
                               ),
                             ),
@@ -320,6 +329,7 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                     );
                   },
                 ),
+              ),
         ),
       ),
     );
