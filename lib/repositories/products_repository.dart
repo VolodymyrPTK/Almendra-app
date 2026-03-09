@@ -12,9 +12,17 @@ class ProductsRepository {
       _firestore.collection('products');
 
   /// Fetches the first page of products.
-  Future<({List<Product> products, DocumentSnapshot? lastDoc})>
-  fetchFirstPage() async {
-    final snapshot = await _collection
+  Future<({List<Product> products, DocumentSnapshot? lastDoc})> fetchFirstPage({List<String>? categoryFilter}) async {
+    Query<Map<String, dynamic>> query = _collection;
+    if (categoryFilter != null && categoryFilter.isNotEmpty) {
+      if (categoryFilter.length == 1) {
+        query = query.where('category', isEqualTo: categoryFilter.first);
+      } else {
+        query = query.where('category', whereIn: categoryFilter.take(10).toList());
+      }
+    }
+
+    final snapshot = await query
         .orderBy('name')
         .limit(_pageSize)
         .get(const GetOptions(source: Source.serverAndCache));
@@ -24,9 +32,19 @@ class ProductsRepository {
 
   /// Fetches the next page after [lastDocument].
   Future<({List<Product> products, DocumentSnapshot? lastDoc})> fetchNextPage(
-    DocumentSnapshot lastDocument,
-  ) async {
-    final snapshot = await _collection
+    DocumentSnapshot lastDocument, {
+    List<String>? categoryFilter,
+  }) async {
+    Query<Map<String, dynamic>> query = _collection;
+    if (categoryFilter != null && categoryFilter.isNotEmpty) {
+      if (categoryFilter.length == 1) {
+        query = query.where('category', isEqualTo: categoryFilter.first);
+      } else {
+        query = query.where('category', whereIn: categoryFilter.take(10).toList());
+      }
+    }
+
+    final snapshot = await query
         .orderBy('name')
         .startAfterDocument(lastDocument)
         .limit(_pageSize)

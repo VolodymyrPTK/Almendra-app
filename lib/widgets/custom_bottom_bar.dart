@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/product.dart';
 import '../repositories/products_repository.dart';
+import '../providers/products_provider.dart';
 import 'product_detail_sheet.dart';
 
 class CustomBottomBar extends StatefulWidget {
@@ -298,7 +300,53 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
               const SizedBox(height: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: catKeys.map((cat) {
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedCategory = null;
+                          _isCategoriesExpanded = false;
+                        });
+                        context.read<ProductsProvider>().setCategoryFilter(null);
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8CAF7B).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFF8CAF7B).withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Усі товари',
+                                style: TextStyle(
+                                  color: Color(0xFF8CAF7B),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.grid_view_rounded,
+                              size: 20,
+                              color: const Color(0xFF8CAF7B).withValues(alpha: 0.8),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  ...catKeys.map((cat) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: InkWell(
@@ -343,7 +391,8 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                     ),
                   );
                 }).toList(),
-              ),
+              ],
+            ),
             ],
           ),
         ),
@@ -402,7 +451,11 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: InkWell(
                         onTap: () {
-                          // Action for subcategory tap
+                          setState(() {
+                            _selectedCategory = null;
+                            _isCategoriesExpanded = false;
+                          });
+                          context.read<ProductsProvider>().setCategoryFilter([sub]);
                         },
                         borderRadius: BorderRadius.circular(100),
                         child: Container(
@@ -448,7 +501,20 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                 elevation: 0,
               ),
               onPressed: () {
-                // Action to show all products of this category
+                final subs = _categories[_selectedCategory!] ?? [];
+                if (subs.isNotEmpty) {
+                  setState(() {
+                    _selectedCategory = null;
+                    _isCategoriesExpanded = false;
+                  });
+                  context.read<ProductsProvider>().setCategoryFilter(subs);
+                } else {
+                  setState(() {
+                    _selectedCategory = null;
+                    _isCategoriesExpanded = false;
+                  });
+                  context.read<ProductsProvider>().setCategoryFilter([_selectedCategory!]);
+                }
               },
               child: Text(
                 'Показати всі ${_selectedCategory?.toLowerCase()}',

@@ -16,6 +16,7 @@ class ProductsProvider extends ChangeNotifier {
   DocumentSnapshot? _lastDocument;
   bool _hasMore = true;
   String? _errorMessage;
+  List<String>? _currentCategoryFilter;
 
   List<Product> get products => _products;
   ProductsStatus get status => _status;
@@ -32,7 +33,7 @@ class ProductsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _repository.fetchFirstPage();
+      final result = await _repository.fetchFirstPage(categoryFilter: _currentCategoryFilter);
       _products = result.products;
       _lastDocument = result.lastDoc;
       _hasMore = result.products.length >= 15;
@@ -57,7 +58,10 @@ class ProductsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _repository.fetchNextPage(_lastDocument!);
+      final result = await _repository.fetchNextPage(
+        _lastDocument!,
+        categoryFilter: _currentCategoryFilter,
+      );
       _products = [..._products, ...result.products];
       _lastDocument = result.lastDoc ?? _lastDocument;
       _hasMore = result.products.length >= 15;
@@ -71,6 +75,17 @@ class ProductsProvider extends ChangeNotifier {
   }
 
   void retry() {
+    _products = [];
+    _lastDocument = null;
+    _hasMore = true;
+    loadProducts();
+  }
+
+  void setCategoryFilter(List<String>? newFilter) {
+    if (_currentCategoryFilter == newFilter) return;
+    _currentCategoryFilter = newFilter;
+    
+    // Reset and reload
     _products = [];
     _lastDocument = null;
     _hasMore = true;
