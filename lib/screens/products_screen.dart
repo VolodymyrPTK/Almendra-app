@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart' as ap;
 import '../providers/cart_provider.dart';
@@ -524,6 +525,31 @@ class _ErrorView extends StatelessWidget {
                   ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
+                if (message!.contains('https://console.firebase.google.com')) ...[
+                  const SizedBox(height: 16),
+                  Builder(
+                    builder: (btnContext) {
+                      final urlRegex = RegExp(r'https://console\.firebase\.google\.com/[^\s]+');
+                      final match = urlRegex.firstMatch(message!);
+                      if (match != null) {
+                        return FilledButton.tonalIcon(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: match.group(0)!));
+                            ScaffoldMessenger.of(btnContext).showSnackBar(
+                              const SnackBar(
+                                content: Text('Посилання скопійовано!'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.copy_rounded, size: 18),
+                          label: const Text('Скопіювати посилання'),
+                        );
+                      }
+                      return const SizedBox();
+                    },
+                  ),
+                ],
               ],
               const SizedBox(height: 24),
               FilledButton.icon(

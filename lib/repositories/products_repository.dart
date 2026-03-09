@@ -12,28 +12,9 @@ class ProductsRepository {
       _firestore.collection('products');
 
   /// Fetches the first page of products.
-  Future<({List<Product> products, DocumentSnapshot? lastDoc})> fetchFirstPage({List<String>? categoryFilter}) async {
-    Query<Map<String, dynamic>> query = _collection;
-    if (categoryFilter != null && categoryFilter.isNotEmpty) {
-      if (categoryFilter.length == 1) {
-        query = query.where('category', isEqualTo: categoryFilter.first);
-      } else {
-        query = query.where('category', whereIn: categoryFilter.take(10).toList());
-      }
-    }
-
-    final snapshot = await query
-        .orderBy('name')
-        .limit(_pageSize)
-        .get(const GetOptions(source: Source.serverAndCache));
-
-    return _mapSnapshot(snapshot);
-  }
-
-  /// Fetches the next page after [lastDocument].
-  Future<({List<Product> products, DocumentSnapshot? lastDoc})> fetchNextPage(
-    DocumentSnapshot lastDocument, {
+  Future<({List<Product> products, DocumentSnapshot? lastDoc})> fetchFirstPage({
     List<String>? categoryFilter,
+    List<String>? booleanFilters,
   }) async {
     Query<Map<String, dynamic>> query = _collection;
     if (categoryFilter != null && categoryFilter.isNotEmpty) {
@@ -44,13 +25,68 @@ class ProductsRepository {
       }
     }
 
+    if (booleanFilters != null && booleanFilters.isNotEmpty) {
+      for (final filter in booleanFilters) {
+        query = query.where(filter, isEqualTo: true);
+      }
+    }
+
+    // We fetch without orderBy('name') to avoid 64+ composite index requirements in Firestore.
+    // Client-side sorting is applied below cleanly.
     final snapshot = await query
-        .orderBy('name')
+        .limit(_pageSize)
+        .get(const GetOptions(source: Source.serverAndCache));
+
+    var docs = snapshot.docs;
+    docs.sort((a, b) {
+      final nameA = (a.data()['name']?.toString() ?? '').toLowerCase();
+      final nameB = (b.data()['name']?.toString() ?? '').toLowerCase();
+      return nameA.compareTo(nameB);
+    });
+
+    final products = docs.map((doc) => Product.fromFirestore(doc)).toList();
+    final lastDoc = docs.isNotEmpty ? docs.last : null;
+
+    return (products: products, lastDoc: lastDoc);
+  }
+
+  /// Fetches the next page after [lastDocument].
+  Future<({List<Product> products, DocumentSnapshot? lastDoc})> fetchNextPage(
+    DocumentSnapshot lastDocument, {
+    List<String>? categoryFilter,
+    List<String>? booleanFilters,
+  }) async {
+    Query<Map<String, dynamic>> query = _collection;
+    if (categoryFilter != null && categoryFilter.isNotEmpty) {
+      if (categoryFilter.length == 1) {
+        query = query.where('category', isEqualTo: categoryFilter.first);
+      } else {
+        query = query.where('category', whereIn: categoryFilter.take(10).toList());
+      }
+    }
+
+    if (booleanFilters != null && booleanFilters.isNotEmpty) {
+      for (final filter in booleanFilters) {
+        query = query.where(filter, isEqualTo: true);
+      }
+    }
+
+    final snapshot = await query
         .startAfterDocument(lastDocument)
         .limit(_pageSize)
         .get(const GetOptions(source: Source.serverAndCache));
 
-    return _mapSnapshot(snapshot);
+    var docs = snapshot.docs;
+    docs.sort((a, b) {
+      final nameA = (a.data()['name']?.toString() ?? '').toLowerCase();
+      final nameB = (b.data()['name']?.toString() ?? '').toLowerCase();
+      return nameA.compareTo(nameB);
+    });
+
+    final products = docs.map((doc) => Product.fromFirestore(doc)).toList();
+    final lastDoc = docs.isNotEmpty ? docs.last : null;
+
+    return (products: products, lastDoc: lastDoc);
   }
 
   static List<Product>? _productCache;
@@ -121,11 +157,5 @@ class ProductsRepository {
     return result;
   }
 
-  ({List<Product> products, DocumentSnapshot? lastDoc}) _mapSnapshot(
-    QuerySnapshot<Map<String, dynamic>> snapshot,
-  ) {
-    final products = snapshot.docs.map(Product.fromFirestore).toList();
-    final lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
-    return (products: products, lastDoc: lastDoc);
-  }
+
 }

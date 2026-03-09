@@ -17,6 +17,7 @@ class ProductsProvider extends ChangeNotifier {
   bool _hasMore = true;
   String? _errorMessage;
   List<String>? _currentCategoryFilter;
+  List<String> _currentBooleanFilters = [];
 
   List<Product> get products => _products;
   ProductsStatus get status => _status;
@@ -33,7 +34,10 @@ class ProductsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _repository.fetchFirstPage(categoryFilter: _currentCategoryFilter);
+      final result = await _repository.fetchFirstPage(
+        categoryFilter: _currentCategoryFilter,
+        booleanFilters: _currentBooleanFilters,
+      );
       _products = result.products;
       _lastDocument = result.lastDoc;
       _hasMore = result.products.length >= 15;
@@ -61,6 +65,7 @@ class ProductsProvider extends ChangeNotifier {
       final result = await _repository.fetchNextPage(
         _lastDocument!,
         categoryFilter: _currentCategoryFilter,
+        booleanFilters: _currentBooleanFilters,
       );
       _products = [..._products, ...result.products];
       _lastDocument = result.lastDoc ?? _lastDocument;
@@ -90,5 +95,22 @@ class ProductsProvider extends ChangeNotifier {
     _lastDocument = null;
     _hasMore = true;
     loadProducts();
+  }
+
+  void toggleBooleanFilter(String filterKey) {
+    if (_currentBooleanFilters.contains(filterKey)) {
+      _currentBooleanFilters.remove(filterKey);
+    } else {
+      _currentBooleanFilters.add(filterKey);
+    }
+
+    _products = [];
+    _lastDocument = null;
+    _hasMore = true;
+    loadProducts();
+  }
+
+  bool isFilterActive(String filterKey) {
+    return _currentBooleanFilters.contains(filterKey);
   }
 }

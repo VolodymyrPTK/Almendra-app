@@ -29,6 +29,8 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
   String? _selectedCategory;
   bool _isLoadingCategories = false;
 
+  bool _isFilterExpanded = false;
+
   final ScrollController _scrollController = ScrollController();
   int _displayLimit = 15;
   List<Product> get _displayedResults =>
@@ -57,6 +59,7 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
       _isCategoriesExpanded = !_isCategoriesExpanded;
       if (_isCategoriesExpanded) {
         _isSearchExpanded = false; // Close search if opening categories
+        _isFilterExpanded = false; 
       } else {
         _selectedCategory = null; 
       }
@@ -82,6 +85,16 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
         }
       }
     }
+  }
+
+  void _onFilterTapped() {
+    setState(() {
+      _isFilterExpanded = !_isFilterExpanded;
+      if (_isFilterExpanded) {
+        _isSearchExpanded = false;
+        _isCategoriesExpanded = false;
+      }
+    });
   }
 
   @override
@@ -161,6 +174,12 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
             if (_isCategoriesExpanded)
               const SizedBox(height: 6),
 
+            if (_isFilterExpanded)
+              _buildFilterMenu(isDark, context),
+
+            if (_isFilterExpanded)
+              const SizedBox(height: 6),
+
             // Bottom Bar Row
             Row(
               children: [
@@ -213,7 +232,7 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                                       _buildNavButton(
                                         context,
                                         label: 'Фільтр',
-                                        onTap: () {},
+                                        onTap: _onFilterTapped,
                                       ),
                                     ],
                                   ),
@@ -228,6 +247,149 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterMenu(bool isDark, BuildContext context) {
+    final fgColor = isDark ? Colors.white : Colors.black87;
+    final provider = context.watch<ProductsProvider>();
+
+    final filterOptions = {
+      'Без цукру': 'freeSugar',
+      'Без глютену': 'freeGluten',
+      'Без лактози': 'freeLactosa',
+      'Низьковуглеводний': 'lowCarbo',
+      'Vegan': 'vegan',
+      'Protein': 'proteinik',
+    };
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.6),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.6)
+            : Colors.white.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.15)
+              : Colors.black.withValues(alpha: 0.05),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 30,
+            spreadRadius: 4,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: RawScrollbar(
+            thumbVisibility: true,
+            thumbColor: fgColor.withValues(alpha: 0.3),
+            radius: const Radius.circular(8),
+            thickness: 4,
+            mainAxisMargin: 12,
+            crossAxisMargin: 6,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Фільтри',
+                    style: TextStyle(
+                      color: fgColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final itemWidth = (constraints.maxWidth - 12) / 2;
+                      return Wrap(
+                        spacing: 12,
+                        runSpacing: 16,
+                        children: filterOptions.entries.map((entry) {
+                          final title = entry.key;
+                          final filterKey = entry.value;
+                          final isActive = provider.isFilterActive(filterKey);
+
+                          return InkWell(
+                            onTap: () {
+                              provider.toggleBooleanFilter(filterKey);
+                            },
+                            borderRadius: BorderRadius.circular(100),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              width: itemWidth,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: isActive
+                                    ? const LinearGradient(
+                                        colors: [
+                                          Color(0xFF6DE8C3),
+                                          Color(0xFF8CAF7B),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : null,
+                                color: isActive
+                                    ? null
+                                    : fgColor.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(100),
+                                border: Border.all(
+                                  color: isActive
+                                      ? Colors.white.withValues(alpha: 0.6)
+                                      : fgColor.withValues(alpha: 0.15),
+                                  width: 1.5,
+                                ),
+                                boxShadow: isActive
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(0xFF6DE8C3).withValues(alpha: 0.4),
+                                          blurRadius: 16,
+                                          spreadRadius: 2,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  title,
+                                  style: TextStyle(
+                                    color: isActive ? Colors.black87 : fgColor,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -734,6 +896,7 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
           _isSearchExpanded = !_isSearchExpanded;
           if (_isSearchExpanded) {
             _isCategoriesExpanded = false;
+            _isFilterExpanded = false;
           } else {
             _searchController.clear();
             _searchResults = [];
