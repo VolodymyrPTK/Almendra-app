@@ -22,6 +22,11 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
   List<Product> _searchResults = [];
   bool _isLoading = false;
 
+  bool _isCategoriesExpanded = false;
+  Map<String, List<String>> _categories = {};
+  String? _selectedCategory;
+  bool _isLoadingCategories = false;
+
   final ScrollController _scrollController = ScrollController();
   int _displayLimit = 15;
   List<Product> get _displayedResults =>
@@ -41,6 +46,38 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
         setState(() {
           _displayLimit += 15;
         });
+      }
+    }
+  }
+
+  Future<void> _onCategoryTapped() async {
+    setState(() {
+      _isCategoriesExpanded = !_isCategoriesExpanded;
+      if (_isCategoriesExpanded) {
+        _isSearchExpanded = false; // Close search if opening categories
+      } else {
+        _selectedCategory = null; 
+      }
+    });
+
+    if (_isCategoriesExpanded && _categories.isEmpty) {
+      setState(() {
+        _isLoadingCategories = true;
+      });
+      try {
+        final cats = await ProductsRepository().fetchCategories();
+        if (mounted) {
+          setState(() {
+            _categories = cats;
+            _isLoadingCategories = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoadingCategories = false;
+          });
+        }
       }
     }
   }
@@ -110,14 +147,18 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Search Results (Inverted)
             if (_isSearchExpanded && (_searchResults.isNotEmpty || _isLoading))
               _buildSearchResults(isDark),
 
             if (_isSearchExpanded && (_searchResults.isNotEmpty || _isLoading))
-              const SizedBox(
-                height: 6,
-              ), // Made space between dropdown and input smaller
+              const SizedBox(height: 6), 
+
+            if (_isCategoriesExpanded)
+              _buildCategoriesMenu(isDark),
+
+            if (_isCategoriesExpanded)
+              const SizedBox(height: 6),
+
             // Bottom Bar Row
             Row(
               children: [
@@ -127,9 +168,10 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                       borderRadius: BorderRadius.circular(100),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 30,
+                          spreadRadius: 4,
+                          offset: const Offset(0, 12),
                         ),
                       ],
                     ),
@@ -164,7 +206,7 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                                       _buildNavButton(
                                         context,
                                         label: 'Категорії',
-                                        onTap: () {},
+                                        onTap: _onCategoryTapped,
                                       ),
                                       _buildNavButton(
                                         context,
@@ -189,6 +231,236 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
     );
   }
 
+  Widget _buildCategoriesMenu(bool isDark) {
+    final fgColor = isDark ? Colors.white : Colors.black87;
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.6),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.6)
+            : Colors.white.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.15)
+              : Colors.black.withValues(alpha: 0.05),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 30,
+            spreadRadius: 4,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: _isLoadingCategories
+              ? const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : _buildCategoriesList(fgColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoriesList(Color fgColor) {
+    if (_selectedCategory == null) {
+      // Show main categories
+      final catKeys = _categories.keys.toList();
+      return RawScrollbar(
+        thumbVisibility: true,
+        thumbColor: fgColor.withValues(alpha: 0.3),
+        radius: const Radius.circular(8),
+        thickness: 4,
+        mainAxisMargin: 12,
+        crossAxisMargin: 6,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Оберіть категорію',
+                style: TextStyle(
+                  color: fgColor,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: catKeys.map((cat) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedCategory = cat;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: fgColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: fgColor.withValues(alpha: 0.15),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                cat,
+                                style: TextStyle(
+                                  color: fgColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 18,
+                              color: fgColor.withValues(alpha: 0.5),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      // Show subcategories
+      final subs = _categories[_selectedCategory!] ?? [];
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header / Back Button
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 4, left: 8, right: 16),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: fgColor, size: 20),
+                  onPressed: () {
+                    setState(() {
+                      _selectedCategory = null;
+                    });
+                  },
+                ),
+                Expanded(
+                  child: Text(
+                    _selectedCategory!,
+                    style: TextStyle(
+                      color: fgColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: fgColor.withValues(alpha: 0.15)),
+          
+          Flexible(
+            child: RawScrollbar(
+              thumbVisibility: true,
+              thumbColor: fgColor.withValues(alpha: 0.3),
+              radius: const Radius.circular(8),
+              thickness: 4,
+              mainAxisMargin: 12,
+              crossAxisMargin: 6,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: subs.map((sub) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: InkWell(
+                        onTap: () {
+                          // Action for subcategory tap
+                        },
+                        borderRadius: BorderRadius.circular(100),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: fgColor.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(100),
+                            border: Border.all(
+                              color: fgColor.withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Text(
+                            sub,
+                            style: TextStyle(
+                              color: fgColor,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ),
+          
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8CAF7B),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 0,
+              ),
+              onPressed: () {
+                // Action to show all products of this category
+              },
+              child: Text(
+                'Показати всі ${_selectedCategory?.toLowerCase()}',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
   Widget _buildSearchResults(bool isDark) {
     final fgColor = isDark ? Colors.white : Colors.black87;
 
@@ -207,9 +479,10 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 30,
+            spreadRadius: 4,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -393,7 +666,9 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
       onTap: () {
         setState(() {
           _isSearchExpanded = !_isSearchExpanded;
-          if (!_isSearchExpanded) {
+          if (_isSearchExpanded) {
+            _isCategoriesExpanded = false;
+          } else {
             _searchController.clear();
             _searchResults = [];
             _isLoading = false;
@@ -430,9 +705,10 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 30,
+                    spreadRadius: 4,
+                    offset: const Offset(0, 12),
                   ),
                 ],
               ),

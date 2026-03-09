@@ -87,6 +87,22 @@ class ProductsRepository {
     return [...inStock, ...outOfStock];
   }
 
+  /// Fetches categories and subcategories.
+  Future<Map<String, List<String>>> fetchCategories() async {
+    final doc = await _firestore.collection('data').doc('categories').get(const GetOptions(source: Source.serverAndCache));
+    if (!doc.exists || doc.data() == null) return {};
+    
+    final data = doc.data()!;
+    final result = <String, List<String>>{};
+    
+    for (final entry in data.entries) {
+      if (entry.value is List) {
+        result[entry.key] = (entry.value as List).map((e) => e.toString()).toList();
+      }
+    }
+    return result;
+  }
+
   ({List<Product> products, DocumentSnapshot? lastDoc}) _mapSnapshot(
     QuerySnapshot<Map<String, dynamic>> snapshot,
   ) {
