@@ -113,4 +113,14 @@ class ProductsProvider extends ChangeNotifier {
   bool isFilterActive(String filterKey) {
     return _currentBooleanFilters.contains(filterKey);
   }
+
+  void clearBooleanFilters() {
+    if (_currentBooleanFilters.isEmpty) return;
+    _currentBooleanFilters.clear();
+    
+    _products = [];
+    _lastDocument = null;
+    _hasMore = true;
+    loadProducts();
+  }
 }

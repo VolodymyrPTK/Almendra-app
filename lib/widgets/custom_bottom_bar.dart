@@ -303,13 +303,40 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Фільтри',
-                    style: TextStyle(
-                      color: fgColor,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Фільтри',
+                        style: TextStyle(
+                          color: fgColor,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () {
+                          provider.clearBooleanFilters();
+                        },
+                        icon: const Icon(Icons.refresh_rounded, size: 16),
+                        label: const Text(
+                          'Очистити',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFE5395E),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   LayoutBuilder(
@@ -328,56 +355,78 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                               provider.toggleBooleanFilter(filterKey);
                             },
                             borderRadius: BorderRadius.circular(100),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
+                            child: Container(
                               width: itemWidth,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 14,
-                              ),
                               decoration: BoxDecoration(
-                                gradient: isActive
-                                    ? const LinearGradient(
-                                        colors: [
-                                          Color(0xFF6DE8C3),
-                                          Color(0xFF8CAF7B),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      )
-                                    : null,
-                                color: isActive
-                                    ? null
-                                    : fgColor.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(100),
-                                border: Border.all(
-                                  color: isActive
-                                      ? Colors.white.withValues(alpha: 0.6)
-                                      : fgColor.withValues(alpha: 0.15),
-                                  width: 1.5,
-                                ),
-                                boxShadow: isActive
-                                    ? [
-                                        BoxShadow(
-                                          color: const Color(0xFF6DE8C3).withValues(alpha: 0.4),
-                                          blurRadius: 16,
-                                          spreadRadius: 2,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ]
-                                    : [],
-                              ),
-                              child: Center(
-                                child: Text(
-                                  title,
-                                  style: TextStyle(
-                                    color: isActive ? Colors.black87 : fgColor,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 8),
                                   ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(100),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 14,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: isActive
+                                          ? LinearGradient(
+                                              colors: [
+                                                const Color(0xFF6DE8C3).withValues(alpha: 0.4),
+                                                const Color(0xFF8CAF7B).withValues(alpha: 0.4),
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            )
+                                          : null,
+                                      color: isActive
+                                          ? null
+                                          : (isDark
+                                              ? Colors.white.withValues(alpha: 0.1)
+                                              : Colors.white.withValues(alpha: 0.7)),
+                                      borderRadius: BorderRadius.circular(100),
+                                      border: Border.all(
+                                        color: isActive
+                                            ? const Color(0xFF6DE8C3).withValues(alpha: 0.6)
+                                            : (isDark
+                                                ? Colors.white.withValues(alpha: 0.2)
+                                                : Colors.white.withValues(alpha: 0.9)),
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: isActive
+                                          ? [
+                                              BoxShadow(
+                                                color: const Color(0xFF6DE8C3).withValues(alpha: 0.3),
+                                                blurRadius: 16,
+                                                spreadRadius: 2,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ]
+                                          : [],
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        title,
+                                        style: TextStyle(
+                                          color: fgColor,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -436,165 +485,92 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
   }
 
   Widget _buildCategoriesList(Color fgColor) {
-    if (_selectedCategory == null) {
-      // Show main categories
-      final catKeys = _categories.keys.toList();
-      return RawScrollbar(
-        thumbVisibility: true,
-        thumbColor: fgColor.withValues(alpha: 0.3),
-        radius: const Radius.circular(8),
-        thickness: 4,
-        mainAxisMargin: 12,
-        crossAxisMargin: 6,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Оберіть категорію',
-                style: TextStyle(
-                  color: fgColor,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
+    final bool isDark = fgColor == Colors.white;
+    Widget buildGlassButton({
+      required double radius,
+      required Widget child,
+      double? width,
+      double? height,
+      EdgeInsetsGeometry? padding,
+    }) {
+      return Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(radius),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(radius),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              padding: padding,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.white.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(radius),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.white.withValues(alpha: 0.9),
+                  width: 1.5,
                 ),
               ),
-              const SizedBox(height: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _selectedCategory = null;
-                          _isCategoriesExpanded = false;
-                        });
-                        context.read<ProductsProvider>().setCategoryFilter(null);
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8CAF7B).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: const Color(0xFF8CAF7B).withValues(alpha: 0.5),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Усі товари',
-                                style: TextStyle(
-                                  color: Color(0xFF8CAF7B),
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.grid_view_rounded,
-                              size: 20,
-                              color: const Color(0xFF8CAF7B).withValues(alpha: 0.8),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  ...catKeys.map((cat) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _selectedCategory = cat;
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: fgColor.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: fgColor.withValues(alpha: 0.15),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                cat,
-                                style: TextStyle(
-                                  color: fgColor,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              size: 18,
-                              color: fgColor.withValues(alpha: 0.5),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ],
+              child: child,
             ),
-            ],
           ),
         ),
       );
-    } else {
-      // Show subcategories
-      final subs = _categories[_selectedCategory!] ?? [];
-      return Column(
+    }
+
+    Widget child;
+    if (_selectedCategory == null) {
+      // Show main categories
+      final catKeys = _categories.keys.toList();
+      child = Column(
+        key: const ValueKey('main_categories'),
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header / Back Button
+          // Header
           Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 4, left: 8, right: 16),
+            padding: const EdgeInsets.only(top: 16, bottom: 12, left: 24, right: 16),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: fgColor, size: 20),
-                  onPressed: () {
+                Text(
+                  'Оберіть категорію',
+                  style: TextStyle(
+                    color: fgColor,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
                     setState(() {
-                      _selectedCategory = null;
+                      _isCategoriesExpanded = false;
                     });
                   },
-                ),
-                Expanded(
-                  child: Text(
-                    _selectedCategory!,
-                    style: TextStyle(
-                      color: fgColor,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  borderRadius: BorderRadius.circular(12),
+                  child: buildGlassButton(
+                    radius: 12,
+                    width: 36,
+                    height: 36,
+                    child: Icon(Icons.close_rounded, size: 18, color: fgColor),
                   ),
                 ),
               ],
             ),
           ),
-          Divider(height: 1, color: fgColor.withValues(alpha: 0.15)),
           
           Flexible(
             child: RawScrollbar(
@@ -605,88 +581,255 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
               mainAxisMargin: 12,
               crossAxisMargin: 6,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: subs.map((sub) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            _selectedCategory = null;
-                            _isCategoriesExpanded = false;
-                          });
-                          context.read<ProductsProvider>().setCategoryFilter([sub]);
-                        },
-                        borderRadius: BorderRadius.circular(100),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: fgColor.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(100),
-                            border: Border.all(
-                              color: fgColor.withValues(alpha: 0.15),
-                            ),
-                          ),
+                  children: [
+                    // All products button
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedCategory = null;
+                          _isCategoriesExpanded = false;
+                        });
+                        context.read<ProductsProvider>().setCategoryFilter(null);
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: buildGlassButton(
+                        radius: 20,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
                           child: Text(
-                            sub,
+                            'Всі Продукти',
                             style: TextStyle(
                               color: fgColor,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
                             ),
-                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
-                    );
-                  }).toList(),
+                    ),
+                    const SizedBox(height: 12),
+                    // Grid / Wrap
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final itemWidth = (constraints.maxWidth - 24) / 3;
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: catKeys.map((cat) {
+                            return InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedCategory = cat;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: buildGlassButton(
+                                radius: 16,
+                                width: itemWidth,
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+                                child: Center(
+                                  child: Text(
+                                    cat,
+                                    style: TextStyle(
+                                      color: fgColor,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
               ),
             ),
           ),
-          
+        ],
+      );
+    } else {
+      // Show subcategories
+      final subs = _categories[_selectedCategory!] ?? [];
+      final currentCat = _selectedCategory;
+      child = Column(
+        key: ValueKey('sub_$currentCat'),
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8CAF7B),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+            padding: const EdgeInsets.only(top: 16, bottom: 12, left: 16, right: 16),
+            child: Row(
+              children: [
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedCategory = null;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: buildGlassButton(
+                    radius: 12,
+                    width: 36,
+                    height: 36,
+                    child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: fgColor),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 0,
-              ),
-              onPressed: () {
-                final subs = _categories[_selectedCategory!] ?? [];
-                if (subs.isNotEmpty) {
-                  setState(() {
-                    _selectedCategory = null;
-                    _isCategoriesExpanded = false;
-                  });
-                  context.read<ProductsProvider>().setCategoryFilter(subs);
-                } else {
-                  setState(() {
-                    _selectedCategory = null;
-                    _isCategoriesExpanded = false;
-                  });
-                  context.read<ProductsProvider>().setCategoryFilter([_selectedCategory!]);
-                }
-              },
-              child: Text(
-                'Показати всі ${_selectedCategory?.toLowerCase()}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _selectedCategory!,
+                    style: TextStyle(
+                      color: fgColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          Flexible(
+            child: RawScrollbar(
+              thumbVisibility: true,
+              thumbColor: fgColor.withValues(alpha: 0.3),
+              radius: const Radius.circular(8),
+              thickness: 4,
+              mainAxisMargin: 12,
+              crossAxisMargin: 6,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // All sub products button
+                    InkWell(
+                      onTap: () {
+                        final categoryProducts = _categories[currentCat!] ?? [];
+                        setState(() {
+                          _selectedCategory = null;
+                          _isCategoriesExpanded = false;
+                        });
+                        if (categoryProducts.isNotEmpty) {
+                          context.read<ProductsProvider>().setCategoryFilter(categoryProducts);
+                        } else {
+                          context.read<ProductsProvider>().setCategoryFilter([currentCat]);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: buildGlassButton(
+                        radius: 20,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: Text(
+                            'Всі ${currentCat?.toLowerCase()}',
+                            style: TextStyle(
+                              color: fgColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Grid / Wrap
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final itemWidth = (constraints.maxWidth - 24) / 3;
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: subs.map((sub) {
+                            return InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedCategory = null;
+                                  _isCategoriesExpanded = false;
+                                });
+                                context.read<ProductsProvider>().setCategoryFilter([sub]);
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: buildGlassButton(
+                                radius: 16,
+                                width: itemWidth,
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+                                child: Center(
+                                  child: Text(
+                                    sub,
+                                    style: TextStyle(
+                                      color: fgColor,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
           ),
         ],
       );
     }
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOutCubic,
+      alignment: Alignment.topCenter,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+          return Stack(
+            alignment: Alignment.topCenter,
+            children: <Widget>[
+              ...previousChildren,
+              if (currentChild != null) currentChild,
+            ],
+          );
+        },
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          // Determine the sliding direction based on the child's key.
+          final offsetAnimation = Tween<Offset>(
+            begin: child.key == const ValueKey('main_categories')
+                ? const Offset(-1.0, 0.0) // Moving back out, slide old one off to the left/new one in from left
+                : const Offset(1.0, 0.0), // Moving in, slide from the right
+            end: Offset.zero,
+          ).animate(animation);
+
+          return SlideTransition(
+            position: offsetAnimation,
+            child: child,
+          );
+        },
+        child: child,
+      ),
+    );
   }
 
   Widget _buildSearchResults(bool isDark) {
