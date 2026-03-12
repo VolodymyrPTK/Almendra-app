@@ -5,6 +5,7 @@ import '../models/cart_item.dart';
 import '../providers/auth_provider.dart' as ap;
 import '../providers/cart_provider.dart';
 import 'auth_sheet.dart';
+import 'checkout_sheet.dart';
 
 class CartSheet extends StatelessWidget {
   const CartSheet({super.key});
@@ -378,7 +379,12 @@ class _Footer extends StatelessWidget {
                 child: _OutlineBtn(
                   label: 'Оформити',
                   filled: !cart.isEmpty,
-                  onTap: cart.isEmpty ? null : () {},
+                  onTap: cart.isEmpty
+                      ? null
+                      : () {
+                          Navigator.pop(context);
+                          CheckoutSheet.show(context);
+                        },
                   titleCol: titleCol,
                   borderCol: borderCol,
                   isDark: isDark,

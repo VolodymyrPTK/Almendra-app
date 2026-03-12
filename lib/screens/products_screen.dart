@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -43,82 +44,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   void _showUserMenu(BuildContext context, ap.AuthProvider auth) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF1E1A17) : Colors.white;
-    final textColor = isDark ? Colors.white : const Color(0xFF3B3228);
-    final subText = isDark ? Colors.white60 : const Color(0xFF7A6F63);
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-        padding: EdgeInsets.fromLTRB(
-          24,
-          16,
-          24,
-          MediaQuery.of(context).padding.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: subText.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Icon(
-              Icons.person_outline_rounded,
-              size: 48,
-              color: const Color(0xFF8CAF7B),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              auth.user?.displayName ?? auth.user?.email ?? 'Користувач',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: textColor,
-              ),
-            ),
-            if (auth.user?.email != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                auth.user!.email!,
-                style: TextStyle(fontSize: 13, color: subText),
-              ),
-            ],
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  auth.signOut();
-                  Navigator.pop(context);
-                },
-                icon: const Icon(Icons.logout_rounded, size: 18),
-                label: const Text('Вийти'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red[400],
-                  side: BorderSide(color: Colors.red.withValues(alpha: 0.4)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    _UserProfileSheet.show(context, auth);
   }
 
   @override
@@ -561,6 +487,745 @@ class _ErrorView extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── User Profile Sheet ────────────────────────────────────────────────────────
+// Full-panel cart-style sheet with view/edit modes for profile data.
+
+class _UserProfileSheet extends StatefulWidget {
+  const _UserProfileSheet({required this.auth});
+  final ap.AuthProvider auth;
+
+  static void show(BuildContext context, ap.AuthProvider auth) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Profile',
+      barrierColor: Colors.black45,
+      transitionDuration: const Duration(milliseconds: 320),
+      pageBuilder: (_, __, ___) => ChangeNotifierProvider.value(
+        value: auth,
+        child: _UserProfileSheet(auth: auth),
+      ),
+      transitionBuilder: (_, anim, __, child) => SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(1, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+        child: child,
+      ),
+    );
+  }
+
+  @override
+  State<_UserProfileSheet> createState() => _UserProfileSheetState();
+}
+
+class _UserProfileSheetState extends State<_UserProfileSheet> {
+  final _firstNameCtrl  = TextEditingController();
+  final _secondNameCtrl = TextEditingController();
+  final _phoneCtrl      = TextEditingController();
+
+  bool _editing   = false;
+  bool _loading   = true;
+  bool _saving    = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final uid = widget.auth.user?.uid;
+    if (uid == null) { setState(() => _loading = false); return; }
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('profiles').doc(uid).get();
+      final data = doc.data() ?? {};
+      if (mounted) {
+        _firstNameCtrl.text  = data['firstName']  as String? ?? '';
+        _secondNameCtrl.text = data['secondName'] as String? ?? '';
+        _phoneCtrl.text      = data['phone']       as String? ?? '';
+        setState(() => _loading = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _save() async {
+    final uid = widget.auth.user?.uid;
+    if (uid == null) return;
+    setState(() => _saving = true);
+    try {
+      await FirebaseFirestore.instance
+          .collection('profiles')
+          .doc(uid)
+          .set({
+            'firstName'  : _firstNameCtrl.text.trim(),
+            'secondName' : _secondNameCtrl.text.trim(),
+            'phone'      : _phoneCtrl.text.trim(),
+          }, SetOptions(merge: true));
+      if (mounted) setState(() { _saving = false; _editing = false; });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Помилка: $e'),
+            backgroundColor: const Color(0xFFE5395E),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _firstNameCtrl.dispose();
+    _secondNameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark    = Theme.of(context).brightness == Brightness.dark;
+    final panelBg   = isDark ? const Color(0xFF1E1A17) : const Color(0xFFF0EAE2);
+    final cardBg    = isDark ? const Color(0xFF2A2420) : Colors.white;
+    final titleCol  = isDark ? Colors.white : const Color(0xFF2B2118);
+    final subCol    = isDark ? Colors.white70 : const Color(0xFF5A5047);
+    final borderCol = isDark ? Colors.white12 : const Color(0xFFDDD6CC);
+    const green     = Color(0xFF8CAF7B);
+    final topPad    = MediaQuery.of(context).padding.top + 16;
+    final bottomPad = MediaQuery.of(context).padding.bottom + 20;
+
+    final fullName = [
+      _firstNameCtrl.text.trim(),
+      _secondNameCtrl.text.trim(),
+    ].where((s) => s.isNotEmpty).join(' ');
+
+    final initial = fullName.isNotEmpty
+        ? fullName[0].toUpperCase()
+        : (widget.auth.user?.email ?? '?')[0].toUpperCase();
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(12, topPad, 12, 16),
+      child: Material(
+        color: Colors.transparent,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              color: panelBg,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.20),
+                  blurRadius: 30,
+                  offset: const Offset(-6, 0),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+
+                // ── Header ─────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 8, 8),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 36, height: 36,
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: borderCol, width: 1.2),
+                          ),
+                          child: Icon(Icons.arrow_back_ios_new_rounded,
+                              size: 16, color: titleCol),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text('Профіль',
+                          style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.w900,
+                            color: titleCol,
+                          )),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Body ───────────────────────────────────────────────
+                Expanded(
+                  child: _loading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation(green),
+                            strokeWidth: 2.5,
+                          ))
+                      : AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 280),
+                          switchInCurve: Curves.easeOut,
+                          switchOutCurve: Curves.easeIn,
+                          child: _editing
+                              // ── EDIT MODE: individual input fields ────────
+                              ? SingleChildScrollView(
+                                  key: const ValueKey('edit'),
+                                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 4, bottom: 10),
+                                        child: Text('РЕДАГУВАННЯ ПРОФІЛЮ',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            color: subCol,
+                                            letterSpacing: 1.2,
+                                          )),
+                                      ),
+                                      _ProfileField(
+                                        controller: _firstNameCtrl,
+                                        label: "Ім'я",
+                                        icon: Icons.person_outline_rounded,
+                                        editing: true,
+                                        isDark: isDark, cardBg: cardBg,
+                                        titleCol: titleCol, subCol: subCol,
+                                        borderCol: borderCol,
+                                        inputFormatters: [_CyrillicNameFmt()],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      _ProfileField(
+                                        controller: _secondNameCtrl,
+                                        label: 'Прізвище',
+                                        icon: Icons.badge_outlined,
+                                        editing: true,
+                                        isDark: isDark, cardBg: cardBg,
+                                        titleCol: titleCol, subCol: subCol,
+                                        borderCol: borderCol,
+                                        inputFormatters: [_CyrillicNameFmt()],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      _ProfileField(
+                                        controller: _phoneCtrl,
+                                        label: 'Телефон',
+                                        icon: Icons.phone_outlined,
+                                        editing: true,
+                                        isDark: isDark, cardBg: cardBg,
+                                        titleCol: titleCol, subCol: subCol,
+                                        borderCol: borderCol,
+                                        keyboardType: TextInputType.phone,
+                                        inputFormatters: [_UkrPhoneFmt()],
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              // ── VIEW MODE: single info card ───────────────
+                              : SingleChildScrollView(
+                                  key: const ValueKey('view'),
+                                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      // Avatar + name header card
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 18),
+                                        decoration: BoxDecoration(
+                                          color: cardBg,
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: borderCol, width: 1.2),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                  alpha: isDark ? 0.25 : 0.06),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 56, height: 56,
+                                              decoration: BoxDecoration(
+                                                color: green.withValues(alpha: 0.12),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                    color: green.withValues(alpha: 0.35),
+                                                    width: 2),
+                                              ),
+                                              child: Center(
+                                                child: Text(initial,
+                                                  style: const TextStyle(
+                                                    fontSize: 24,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: green,
+                                                  )),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    fullName.isNotEmpty
+                                                        ? fullName
+                                                        : 'Користувач',
+                                                    style: TextStyle(
+                                                      fontSize: 17,
+                                                      fontWeight: FontWeight.w800,
+                                                      color: titleCol,
+                                                    )),
+                                                  if (widget.auth.user?.email != null)
+                                                    Text(
+                                                      widget.auth.user!.email!,
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: subCol,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+
+                                      // Contact info card
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: cardBg,
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: borderCol, width: 1.2),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                  alpha: isDark ? 0.25 : 0.06),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            _InfoRow(
+                                              icon: Icons.person_outline_rounded,
+                                              label: "Ім'я",
+                                              value: _firstNameCtrl.text.trim().isNotEmpty
+                                                  ? _firstNameCtrl.text.trim()
+                                                  : '—',
+                                              titleCol: titleCol,
+                                              subCol: subCol,
+                                              borderCol: borderCol,
+                                              showDivider: true,
+                                            ),
+                                            _InfoRow(
+                                              icon: Icons.badge_outlined,
+                                              label: 'Прізвище',
+                                              value: _secondNameCtrl.text.trim().isNotEmpty
+                                                  ? _secondNameCtrl.text.trim()
+                                                  : '—',
+                                              titleCol: titleCol,
+                                              subCol: subCol,
+                                              borderCol: borderCol,
+                                              showDivider: true,
+                                            ),
+                                            _InfoRow(
+                                              icon: Icons.phone_outlined,
+                                              label: 'Телефон',
+                                              value: _phoneCtrl.text.trim().isNotEmpty
+                                                  ? _phoneCtrl.text.trim()
+                                                  : '—',
+                                              titleCol: titleCol,
+                                              subCol: subCol,
+                                              borderCol: borderCol,
+                                              showDivider: false,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                        ),  // AnimatedSwitcher
+                ),  // Expanded (body)
+
+                // ── Footer ─────────────────────────────────────────────
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(20, 8, 20, bottomPad),
+                    child: _editing
+                        // ── EDIT MODE: Cancel (left) + Save (right) ──────
+                        ? Row(
+                            children: [
+                              // Cancel — outlined, neutral
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() {
+                                    _editing = false;
+                                    _loadProfile();
+                                  }),
+                                  child: Container(
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: borderCol, width: 1.5),
+                                      borderRadius: BorderRadius.circular(25),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        'Скасувати',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: subCol,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Save — green, prominent
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: _saving ? null : _save,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: _saving
+                                          ? green.withValues(alpha: 0.6)
+                                          : green,
+                                      borderRadius: BorderRadius.circular(25),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: green.withValues(alpha: 0.4),
+                                          blurRadius: 14,
+                                          offset: const Offset(0, 5),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                      child: _saving
+                                          ? const SizedBox(
+                                              width: 22, height: 22,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.5,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation(
+                                                        Colors.white),
+                                              ))
+                                          : const Text(
+                                              'Зберегти',
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                              )),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        // ── VIEW MODE: Edit (green) + Logout (danger text) ─
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Edit button — full width, green
+                              GestureDetector(
+                                onTap: () =>
+                                    setState(() => _editing = true),
+                                child: Container(
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: green,
+                                    borderRadius: BorderRadius.circular(25),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: green.withValues(alpha: 0.4),
+                                        blurRadius: 14,
+                                        offset: const Offset(0, 5),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.edit_outlined,
+                                          size: 18, color: Colors.white),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Редагувати',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              // Logout — text-only, danger, clearly separated
+                              TextButton.icon(
+                                onPressed: () {
+                                  widget.auth.signOut();
+                                  Navigator.pop(context);
+                                },
+                                icon: Icon(Icons.logout_rounded,
+                                    size: 16,
+                                    color: Colors.red[400]),
+                                label: Text(
+                                  'Вийти з акаунту',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.red[400],
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Profile field: read-only card ↔ editable input ───────────────────────────
+
+class _ProfileField extends StatelessWidget {
+  const _ProfileField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    required this.editing,
+    required this.isDark,
+    required this.cardBg,
+    required this.titleCol,
+    required this.subCol,
+    required this.borderCol,
+    this.keyboardType,
+    this.inputFormatters,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final bool editing;
+  final bool isDark;
+  final Color cardBg;
+  final Color titleCol;
+  final Color subCol;
+  final Color borderCol;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: editing
+              ? const Color(0xFF8CAF7B).withValues(alpha: 0.5)
+              : borderCol,
+          width: editing ? 1.8 : 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        enabled: editing,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        autocorrect: false,
+        enableSuggestions: false,
+        style: TextStyle(
+          color: titleCol,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(
+            color: editing
+                ? const Color(0xFF8CAF7B)
+                : subCol,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          prefixIcon: Icon(icon,
+              color: editing
+                  ? const Color(0xFF8CAF7B)
+                  : subCol,
+              size: 20),
+          filled: false,
+          border: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Tiny formatters re-used from checkout (private to this file) ──────────────
+
+class _CyrillicNameFmt extends TextInputFormatter {
+  static final _ok = RegExp(r'[\u0400-\u04FF\u0027\- ]');
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue o, TextEditingValue n) {
+    final src = n.text;
+    final buf = StringBuffer();
+    int cur = n.selection.baseOffset.clamp(0, src.length);
+    int rm = 0;
+    for (int i = 0; i < src.length; i++) {
+      if (_ok.hasMatch(src[i])) { buf.write(src[i]); }
+      else { if (i < cur) rm++; }
+    }
+    String r = buf.toString();
+    if (r.isNotEmpty) r = r[0].toUpperCase() + r.substring(1);
+    final off = (cur - rm).clamp(0, r.length);
+    return TextEditingValue(
+        text: r, selection: TextSelection.collapsed(offset: off));
+  }
+}
+
+class _UkrPhoneFmt extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue o, TextEditingValue n) {
+    final raw = n.text;
+    String local;
+    if (raw.startsWith('+38') || raw.startsWith('380')) {
+      local = raw
+          .replaceFirst(RegExp(r'^\+?38[\s(]*'), '')
+          .replaceAll(RegExp(r'\D'), '');
+    } else {
+      local = raw.replaceAll(RegExp(r'\D'), '');
+    }
+    if (local.length >= 2 && !local.startsWith('0')) local = '0$local';
+    if (local.length > 10) local = local.substring(0, 10);
+    final buf = StringBuffer('+38 ');
+    if (local.isNotEmpty) {
+      buf.write('(');
+      if (local.length <= 3) { buf.write(local); }
+      else {
+        buf.write('${local.substring(0, 3)}) ');
+        if (local.length <= 6) { buf.write(local.substring(3)); }
+        else {
+          buf.write('${local.substring(3, 6)} ');
+          buf.write(local.substring(6));
+        }
+      }
+    }
+    final res = buf.toString();
+    return TextEditingValue(
+        text: res, selection: TextSelection.collapsed(offset: res.length));
+  }
+}
+
+// ── Info row: view-mode label+value inside the profile card ──────────────────
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.titleCol,
+    required this.subCol,
+    required this.borderCol,
+    required this.showDivider,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color titleCol;
+  final Color subCol;
+  final Color borderCol;
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: subCol),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: subCol,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: titleCol,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (showDivider)
+          Divider(height: 1, thickness: 1, color: borderCol, indent: 50),
+      ],
     );
   }
 }
