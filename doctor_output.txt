@@ -1,0 +1,42 @@
+[!] Flutter (Channel stable, 3.41.4, on Microsoft Windows [Version 10.0.26200.8037], locale uk-UA) [422ms]
+    • Flutter version 3.41.4 on channel stable at C:\flutter
+    ! The flutter binary is not on your path. Consider adding C:\flutter\bin to your path.
+    ! The dart binary is not on your path. Consider adding C:\flutter\bin to your path.
+    • Upstream repository https://github.com/flutter/flutter.git
+    • Framework revision ff37bef603 (10 days ago), 2026-03-03 16:03:22 -0800
+    • Engine revision e4b8dca3f1
+    • Dart version 3.11.1
+    • DevTools version 2.54.1
+    • Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop, enable-windows-desktop, enable-android, enable-ios, cli-animations, enable-native-assets, omit-legacy-version-file, enable-lldb-debugging, enable-uiscene-migration
+    • If those were intentional, you can disregard the above warnings; however it is recommended to use "git" directly to perform update checks and upgrades.
+
+[√] Windows Version (Windows 11 or higher, 25H2, 2009) [1 288ms]
+
+[!] Android toolchain - develop for Android devices (Android SDK version 36.1.0) [454ms]
+    • Android SDK at C:\Users\vladi\AppData\Local\Android\sdk
+    • Emulator version 36.4.10.0 (build_id 15004761) (CL:N/A)
+    X cmdline-tools component is missing.
+      Try installing or updating Android Studio.
+      Alternatively, download the tools from https://developer.android.com/studio#command-line-tools-only and make sure to set the ANDROID_HOME environment variable.
+      See https://developer.android.com/studio/command-line for more details.
+    X Android license status unknown.
+      Run `flutter doctor --android-licenses` to accept the SDK licenses.
+      See https://flutter.dev/to/windows-android-setup for more details.
+
+[√] Chrome - develop for the web [27ms]
+    • Chrome at C:\Program Files\Google\Chrome\Application\chrome.exe
+
+[X] Visual Studio - develop Windows apps [24ms]
+    X Visual Studio not installed; this is necessary to develop Windows apps.
+      Download at https://visualstudio.microsoft.com/downloads/.
+      Please install the "Desktop development with C++" workload, including all of its default components
+
+[√] Connected device (3 available) [473ms]
+    • Windows (desktop) • windows • windows-x64    • Microsoft Windows [Version 10.0.26200.8037]
+    • Chrome (web)      • chrome  • web-javascript • Google Chrome 145.0.7632.160
+    • Edge (web)        • edge    • web-javascript • Microsoft Edge 145.0.3800.97
+
+[√] Network resources [542ms]
+    • All expected network resources are available.
+
+! Doctor found issues in 3 categories.
