@@ -45,5 +45,32 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- Google & Facebook Sign-In Scheme (Update with actual reversed client ID from GoogleService-Info.plist) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Google Sign-In REVERSED_CLIENT_ID -->
+				<string>com.googleusercontent.apps.673059035521-7jhplak26g6ii2bno259t90tpuqm69g6</string>
+				<!-- Facebook App ID prefixed by fb -->
+				<string>fb2024423444567830</string>
+			</array>
+		</dict>
+	</array>
+	<key>FacebookAppID</key>
+	<string>2024423444567830</string>
+	<key>FacebookClientToken</key>
+	<string>2fbd0f3a7c9141f7aa5b10450361c3a2</string>
+	<key>FacebookDisplayName</key>
+	<string>Almendra</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>fbapi</string>
+		<string>fb-messenger-share-api</string>
+	</array>
 </dict>
 </plist>

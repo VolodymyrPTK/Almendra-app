@@ -95,9 +95,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           padding: EdgeInsets.symmetric(
                             horizontal: hasItems ? 14 : 0,
                           ),
-                          constraints: BoxConstraints(
+                          constraints: const BoxConstraints(
                             minWidth: 40,
-                            maxWidth: hasItems ? 130 : 40,
                           ),
                           decoration: BoxDecoration(
                             color: hasItems
@@ -117,31 +116,40 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               width: 1.5,
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.shopping_bag_outlined,
-                                size: 20,
-                                color: hasItems
-                                    ? Colors.white
-                                    : (isDark
-                                          ? Colors.white
-                                          : const Color(0xFF3B3228)),
-                              ),
-                              if (hasItems) ...[
-                                const SizedBox(width: 6),
-                                Text(
-                                  '${cart.total.toStringAsFixed(0)} грн',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
+                          child: AnimatedSize(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOutCubic,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.shopping_bag_outlined,
+                                  size: 20,
+                                  color: hasItems
+                                      ? Colors.white
+                                      : (isDark
+                                            ? Colors.white
+                                            : const Color(0xFF3B3228)),
                                 ),
+                                if (hasItems) ...[
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      '${cart.total.toStringAsFixed(0)} грн',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.visible,
+                                      softWrap: false,
+                                    ),
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         ),
                       ),

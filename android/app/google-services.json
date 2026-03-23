@@ -1,26 +1,44 @@
 {
   "project_info": {
     "project_number": "673059035521",
+    "firebase_url": "https://almendra-a411d-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "almendra-a411d",
     "storage_bucket": "almendra-a411d.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:673059035521:android:0000000000000001",
+        "mobilesdk_app_id": "1:673059035521:android:4f7216b7e0600cf6e47080",
         "android_client_info": {
           "package_name": "com.example.almendra"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "673059035521-ft1dskjsdvjgeitj2mvu1f8pdr6ci9rk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDO4sBYIDZlWsKTFrmUfgG1ZATkRbqumNE"
+          "current_key": "AIzaSyDHlPzj1e537Z9r_ryzd0bVh-uX4hbsouI"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "673059035521-3btp5auj4jc54buku5icgdq7dov5ofd7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "673059035521-l259hpn2gd5tdk3b5a7dno8r5fh5r1kf.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mycompany.almendra"
+              }
+            }
+          ]
         }
       }
     }
