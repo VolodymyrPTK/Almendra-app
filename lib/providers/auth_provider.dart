@@ -9,6 +9,16 @@ enum AuthStatus { idle, loading, success, error }
 class AuthProvider extends ChangeNotifier {
   final _auth = FirebaseAuth.instance;
 
+  // Only request 'email' — the minimum needed for Firebase Auth.
+  // Explicitly pass the iOS CLIENT_ID so the plugin does NOT fall back to
+  // reading GoogleService-Info.plist, which causes it to pick up a serverClientId
+  // and request broad Google Cloud Platform scopes.
+  final _googleSignIn = GoogleSignIn(
+    scopes: ['email'],
+    // iOS CLIENT_ID from GoogleService-Info.plist
+    clientId: '673059035521-7jhplak26g6ii2bno259t90tpuqm69g6.apps.googleusercontent.com',
+  );
+
   AuthStatus _status = AuthStatus.idle;
   String? _error;
 
@@ -57,8 +67,9 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> signInWithGoogle() async {
     _setLoading();
     try {
-      final googleUser = await GoogleSignIn().signIn();
+      final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
+        // User cancelled the sign-in dialog
         _status = AuthStatus.idle;
         notifyListeners();
         return false;
@@ -83,7 +94,11 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> signInWithFacebook() async {
     _setLoading();
     try {
-      final result = await FacebookAuth.instance.login();
+      final result = await FacebookAuth.instance.login(
+        permissions: ['email', 'public_profile'],
+        // Use native Facebook app if installed; fall back to system browser (not in-app web view)
+        loginBehavior: LoginBehavior.nativeWithFallback,
+      );
       if (result.status != LoginStatus.success) {
         _status = AuthStatus.idle;
         notifyListeners();
@@ -105,7 +120,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _auth.signOut();
-    await GoogleSignIn().signOut();
+    await _googleSignIn.signOut();
     _status = AuthStatus.idle;
     notifyListeners();
   }

@@ -1,4 +1,4 @@
-package com.example.almendra
+package com.almendra.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -40,9 +40,17 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Required for Flutter text processing plugin -->
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Facebook app (required for Facebook SDK to detect the FB app and use native login) -->
+        <package android:name="com.facebook.katana"/>
+        <package android:name="com.facebook.lite"/>
+        <!-- Chrome Custom Tabs (Facebook Login fallback when FB app is not installed) -->
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService"/>
         </intent>
     </queries>
 </manifest>
