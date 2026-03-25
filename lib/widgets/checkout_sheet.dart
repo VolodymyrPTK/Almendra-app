@@ -9,6 +9,8 @@ import 'package:crypto/crypto.dart';
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart' as ap;
 import 'payment_options_view.dart';
+import '../services/nova_poshta_service.dart';
+import 'delivery_widgets.dart';
 import 'liqpay_webview.dart';
 
 enum _Delivery { nova, ukr }
@@ -55,7 +57,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
   // Nova Poshta
   final _novaCityCtrl = TextEditingController(); // short city name (city)
   final _novaWarehouseCtrl =
-      TextEditingController(); // warehouse number (warehouse)
+      TextEditingController(); // warehouse description (warehouse)
 
   // Ukr Poshta
   final _ukrCityCtrl = TextEditingController(); // city
@@ -125,15 +127,63 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
         _ukrCityCtrl.text = data['city'] as String? ?? '';
         _ukrIndexCtrl.text = data['cityIndex'] as String? ?? '';
       } else if (delOption == 'novaPoshta') {
-        setState(() => _delivery = _Delivery.nova);
-        _novaCityCtrl.text = data['city'] as String? ?? '';
-        _novaWarehouseCtrl.text = data['warehouse'] as String? ?? '';
-        _selectedWarehouseIndex = data['warehouseIndex'] as String?;
-        // Note: Refs are not stored in profile usually, so we might need to re-search or just preserve text
+        final city = data['city'] as String? ?? '';
+        final warehouse = data['warehouse'] as String? ?? '';
+        setState(() {
+          _delivery = _Delivery.nova;
+          _selectedCityRef = data['cityRef'] as String?;
+          _selectedWarehouseIndex = data['warehouseIndex'] as String?;
+          _warehouseCategory = data['postType'] as String? ?? 'Warehouse';
+        });
+        _novaCityCtrl.text = city;
+        _novaWarehouseCtrl.text = warehouse;
+        
+        if (city.isNotEmpty) {
+          if (_selectedCityRef == null) {
+            // Resolve city first, then warehouse
+            _resolveCityAndMaybeWarehouse(city, warehouse);
+          } else if (warehouse.isNotEmpty && RegExp(r'^\d+$').hasMatch(warehouse)) {
+            // CityRef already known, just resolve warehouse description
+            _fetchAndSetWarehouseDescription(_selectedCityRef!, warehouse);
+          }
+        }
       }
     } catch (_) {
       // silently ignore pre-fill errors
     }
+  }
+
+  Future<void> _fetchAndSetWarehouseDescription(String cityRef, String warehouseNum) async {
+    try {
+      final results = await NovaPoshtaService.getWarehouses(
+        cityRef,
+        findByString: warehouseNum,
+        category: _warehouseCategory,
+      );
+      if (results.isNotEmpty && mounted) {
+        // Find exact match by number if possible, or just take first
+        final match = results.firstWhere(
+          (w) => w['Number'] == warehouseNum || w['WarehouseIndex'] == warehouseNum || results.length == 1,
+          orElse: () => results.first,
+        );
+        setState(() {
+          _novaWarehouseCtrl.text = match['Description'] ?? warehouseNum;
+          _selectedWarehouseIndex = match['WarehouseIndex'];
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _resolveCityAndMaybeWarehouse(String cityName, String warehouseNum) async {
+    try {
+      final cityRef = await NovaPoshtaService.resolveCityRef(cityName, '');
+      if (cityRef != null && mounted) {
+        setState(() => _selectedCityRef = cityRef);
+        if (warehouseNum.isNotEmpty && RegExp(r'^\d+$').hasMatch(warehouseNum)) {
+          _fetchAndSetWarehouseDescription(cityRef, warehouseNum);
+        }
+      }
+    } catch (_) {}
   }
 
   @override
@@ -157,7 +207,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
     final y = dt.year.toString();
     final h = dt.hour.toString().padLeft(2, '0');
     final mi = dt.minute.toString().padLeft(2, '0');
-    return '$d/$mo/$y, $h:$mi';
+    return '$d.$mo.$y, $h:$mi';
   }
 
   Future<bool> _runLiqPayFlow(double amount, int orderId) async {
@@ -237,6 +287,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
         if (_delivery == _Delivery.nova) ...{
           'deliveryOption': 'novaPoshta',
           'city': _novaCityCtrl.text.trim(),
+          'cityRef': _selectedCityRef ?? '',
           'warehouse': _novaWarehouseCtrl.text.trim(),
           'postType': _warehouseCategory,
           'warehouseIndex': _selectedWarehouseIndex ?? '',
@@ -299,9 +350,9 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
         },
         'items': cart.items.map((e) => e.toMap()).toList(),
         'total': cart.total,
-        'payment': paymentMethod == 'liqpay' ? 'liqpay' : 'payLater',
+        'payment': paymentMethod == 'liqpay' ? 'payd' : 'paylater',
         'orderStatus': 'Processing',
-        'paymentStatus': paymentMethod == 'liqpay' ? 'liqpay_pending' : 'cash_on_delivery',
+        'paymentStatus': paymentMethod == 'liqpay' ? 'success' : 'pending',
         'userType': 'authenticated',
         'oblast': '',
         'raion': '',
@@ -350,13 +401,13 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
     setState(() => _loadingCities = true);
     try {
       final normalizedQuery = query.trim().toLowerCase();
-      var results = await _NovaService.searchSettlements(query);
+      var results = await NovaPoshtaService.searchSettlements(query);
 
       // Fallback: If full query returns nothing but has spaces, search by first word and filter locally
       if (results.isEmpty && query.trim().contains(' ')) {
         final firstWord = query.trim().split(' ').first;
         if (firstWord.length >= 2) {
-          final broadResults = await _NovaService.searchSettlements(firstWord);
+          final broadResults = await NovaPoshtaService.searchSettlements(firstWord);
           final queryParts = normalizedQuery.split(' ');
           
           results = broadResults.where((item) {
@@ -408,7 +459,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
     // Resolve CityRef for warehouses
     String? ref = city['DeliveryCity'];
     if (ref == null || ref.isEmpty) {
-      ref = await _NovaService.resolveCityRef(
+      ref = await NovaPoshtaService.resolveCityRef(
         name,
         city['AreaDescription'] ?? '',
       );
@@ -423,7 +474,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
   Future<void> _fetchWarehouses(String query, String cityRef) async {
     setState(() => _loadingWarehouses = true);
     try {
-      final results = await _NovaService.getWarehouses(
+      final results = await NovaPoshtaService.getWarehouses(
         cityRef,
         findByString: query,
         category: _warehouseCategory,
@@ -608,7 +659,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                                 subCol: subCol,
                               ),
                               const SizedBox(height: 10),
-                              _InputCard(
+                              InputCard(
                                 controller: _firstNameCtrl,
                                 label: 'Ім\'я',
                                 icon: Icons.person_outline_rounded,
@@ -625,7 +676,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                                     : null,
                               ),
                               const SizedBox(height: 10),
-                              _InputCard(
+                              InputCard(
                                 controller: _secondNameCtrl,
                                 label: 'Прізвище',
                                 icon: Icons.badge_outlined,
@@ -642,7 +693,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                                     : null,
                               ),
                               const SizedBox(height: 10),
-                              _InputCard(
+                              InputCard(
                                 controller: _phoneCtrl,
                                 label: 'Телефон',
                                 icon: Icons.phone_outlined,
@@ -683,32 +734,24 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: _DeliveryChip(
+                                    child: DeliveryChip(
                                       label: 'Нова Пошта',
                                       icon: Icons.local_shipping_outlined,
                                       selected: _delivery == _Delivery.nova,
-                                      isDark: isDark,
-                                      cardBg: cardBg,
-                                      titleCol: titleCol,
-                                      borderCol: borderCol,
-                                      onTap: () => setState(
-                                        () => _delivery = _Delivery.nova,
-                                      ),
+                                      isDark: isDark, cardBg: cardBg,
+                                      titleCol: titleCol, borderCol: borderCol,
+                                      onTap: () => setState(() => _delivery = _Delivery.nova),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
-                                    child: _DeliveryChip(
+                                    child: DeliveryChip(
                                       label: 'Укрпошта',
                                       icon: Icons.mail_outline_rounded,
                                       selected: _delivery == _Delivery.ukr,
-                                      isDark: isDark,
-                                      cardBg: cardBg,
-                                      titleCol: titleCol,
-                                      borderCol: borderCol,
-                                      onTap: () => setState(
-                                        () => _delivery = _Delivery.ukr,
-                                      ),
+                                      isDark: isDark, cardBg: cardBg,
+                                      titleCol: titleCol, borderCol: borderCol,
+                                      onTap: () => setState(() => _delivery = _Delivery.ukr),
                                     ),
                                   ),
                                 ],
@@ -718,66 +761,41 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                               // Dynamic fields per delivery option
                               AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 260),
-                                transitionBuilder: (child, anim) =>
-                                    FadeTransition(
-                                      opacity: anim,
-                                      child: SlideTransition(
-                                        position: Tween<Offset>(
-                                          begin: const Offset(0, 0.08),
-                                          end: Offset.zero,
-                                        ).animate(anim),
-                                        child: child,
-                                      ),
-                                    ),
+                                transitionBuilder: (child, anim) => FadeTransition(
+                                  opacity: anim,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0, 0.08),
+                                      end: Offset.zero,
+                                    ).animate(anim),
+                                    child: child,
+                                  ),
+                                ),
                                 child: _delivery == _Delivery.nova
-                                    ? _NovaFields(
+                                    ? NovaFields(
                                         key: const ValueKey('nova'),
                                         cityCtrl: _novaCityCtrl,
                                         warehouseCtrl: _novaWarehouseCtrl,
-                                        isDark: isDark,
-                                        cardBg: cardBg,
-                                        titleCol: titleCol,
-                                        subCol: subCol,
-                                        borderCol: borderCol,
-                                        cityFocus: _cityFocus,
-                                        warehouseFocus: _warehouseFocus,
-                                        citySuggestions: _citySuggestions,
-                                        warehouseSuggestions:
-                                            _warehouseSuggestions,
-                                        loadingCities: _loadingCities,
-                                        loadingWarehouses: _loadingWarehouses,
-                                        onCitySearch: _searchCities,
-                                        onCitySelect: _onCitySelected,
-                                        onWarehouseSearch: (q) =>
-                                            _selectedCityRef != null
-                                            ? _fetchWarehouses(
-                                                q,
-                                                _selectedCityRef!,
-                                              )
-                                            : null,
+                                        isDark: isDark, cardBg: cardBg,
+                                        titleCol: titleCol, subCol: subCol, borderCol: borderCol,
+                                        cityFocus: _cityFocus, warehouseFocus: _warehouseFocus,
+                                        citySuggestions: _citySuggestions, warehouseSuggestions: _warehouseSuggestions,
+                                        loadingCities: _loadingCities, loadingWarehouses: _loadingWarehouses,
+                                        onCitySearch: _searchCities, onCitySelect: _onCitySelected,
+                                        onWarehouseSearch: (q) => _selectedCityRef != null ? _fetchWarehouses(q, _selectedCityRef!) : null,
                                         onWarehouseSelect: _onWarehouseSelected,
                                         category: _warehouseCategory,
                                         onCategoryChange: (c) {
-                                          setState(
-                                            () => _warehouseCategory = c,
-                                          );
-                                          if (_selectedCityRef != null) {
-                                            _fetchWarehouses(
-                                              '',
-                                              _selectedCityRef!,
-                                            );
-                                          }
+                                          setState(() => _warehouseCategory = c);
+                                          if (_selectedCityRef != null) _fetchWarehouses('', _selectedCityRef!);
                                         },
                                       )
-                                    : _UkrFields(
+                                    : UkrFields(
                                         key: const ValueKey('ukr'),
                                         cityCtrl: _ukrCityCtrl,
                                         indexCtrl: _ukrIndexCtrl,
-                                        isDark: isDark,
-                                        cardBg: cardBg,
-                                        titleCol: titleCol,
-                                        subCol: subCol,
-                                        borderCol: borderCol,
+                                        isDark: isDark, cardBg: cardBg,
+                                        titleCol: titleCol, subCol: subCol, borderCol: borderCol,
                                       ),
                               ),
                               const SizedBox(height: 8),
@@ -897,516 +915,8 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
 
 // ── Reusable Input Card ────────────────────────────────────────────
 
-class _InputCard extends StatelessWidget {
-  const _InputCard({
-    required this.controller,
-    required this.label,
-    required this.icon,
-    required this.isDark,
-    required this.cardBg,
-    required this.titleCol,
-    required this.subCol,
-    required this.borderCol,
-    this.keyboardType,
-    this.inputFormatters,
-    this.validator,
-    this.autocorrect = true,
-    this.onChanged,
-    this.suffix,
-    this.focusNode,
-  });
+// Reusable components moved to delivery_widgets.dart
 
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final bool isDark;
-  final Color cardBg;
-  final Color titleCol;
-  final Color subCol;
-  final Color borderCol;
-  final TextInputType? keyboardType;
-  final List<TextInputFormatter>? inputFormatters;
-  final String? Function(String?)? validator;
-  final bool autocorrect;
-  final void Function(String)? onChanged;
-  final Widget? suffix;
-  final FocusNode? focusNode;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderCol, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        validator: validator,
-        autocorrect: autocorrect,
-        enableSuggestions: autocorrect,
-        onChanged: onChanged,
-        style: TextStyle(
-          color: titleCol,
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: subCol,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          prefixIcon: Icon(icon, color: subCol, size: 20),
-          suffixIcon: suffix,
-          filled: false,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-          errorStyle: const TextStyle(
-            color: Color(0xFFE5395E),
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Delivery Option Chip ──────────────────────────────────────────
-
-class _DeliveryChip extends StatelessWidget {
-  const _DeliveryChip({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.isDark,
-    required this.cardBg,
-    required this.titleCol,
-    required this.borderCol,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final bool isDark;
-  final Color cardBg;
-  final Color titleCol;
-  final Color borderCol;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    const green = Color(0xFF8CAF7B);
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          color: selected ? green.withValues(alpha: 0.12) : cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? green : borderCol,
-            width: selected ? 2.0 : 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: selected
-                  ? green.withValues(alpha: 0.20)
-                  : Colors.black.withValues(alpha: isDark ? 0.22 : 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: selected ? green : titleCol.withValues(alpha: 0.6),
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: selected ? green : titleCol,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── NovaPoshta Fields ────────────────────────────────────────────
-
-class _NovaFields extends StatelessWidget {
-  const _NovaFields({
-    super.key,
-    required this.cityCtrl,
-    required this.warehouseCtrl,
-    required this.isDark,
-    required this.cardBg,
-    required this.titleCol,
-    required this.subCol,
-    required this.borderCol,
-    required this.cityFocus,
-    required this.warehouseFocus,
-    required this.citySuggestions,
-    required this.warehouseSuggestions,
-    required this.loadingCities,
-    required this.loadingWarehouses,
-    required this.onCitySearch,
-    required this.onCitySelect,
-    required this.onWarehouseSearch,
-    required this.onWarehouseSelect,
-    required this.category,
-    required this.onCategoryChange,
-  });
-
-  final TextEditingController cityCtrl;
-  final TextEditingController warehouseCtrl;
-  final bool isDark;
-  final Color cardBg;
-  final Color titleCol;
-  final Color subCol;
-  final Color borderCol;
-  final FocusNode cityFocus;
-  final FocusNode warehouseFocus;
-  final List<dynamic> citySuggestions;
-  final List<dynamic> warehouseSuggestions;
-  final bool loadingCities;
-  final bool loadingWarehouses;
-  final Function(String) onCitySearch;
-  final Function(dynamic) onCitySelect;
-  final Function(String) onWarehouseSearch;
-  final Function(dynamic) onWarehouseSelect;
-  final String category;
-  final Function(String) onCategoryChange;
-
-  @override
-  Widget build(BuildContext context) {
-    const green = Color(0xFF8CAF7B);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // ── City Search ──────────────────
-        _InputCard(
-          controller: cityCtrl,
-          focusNode: cityFocus,
-          label: 'Населений пункт',
-          icon: Icons.location_city_outlined,
-          isDark: isDark,
-          cardBg: cardBg,
-          titleCol: titleCol,
-          subCol: subCol,
-          borderCol: borderCol,
-          onChanged: onCitySearch,
-          validator: (v) =>
-              v == null || v.trim().isEmpty ? 'Введіть місто' : null,
-          suffix: loadingCities
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(green),
-                  ),
-                )
-              : null,
-        ),
-        if (citySuggestions.isNotEmpty)
-          _SuggestionList(
-            suggestions: citySuggestions,
-            isDark: isDark,
-            cardBg: cardBg,
-            titleCol: titleCol,
-            subCol: subCol,
-            onSelect: onCitySelect,
-            itemBuilder: (city) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  city['Present'] ?? city['Description'] ?? '',
-                  style: TextStyle(
-                    color: titleCol,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (city['AreaDescription'] != null)
-                  Text(
-                    '${city['RegionsDescription'] ?? ''} ${city['AreaDescription']} обл.',
-                    style: TextStyle(color: subCol, fontSize: 11),
-                  ),
-              ],
-            ),
-          ),
-        const SizedBox(height: 12),
-
-        // ── Category Tabs ────────────────
-        Row(
-          children: [
-            _MiniTab(
-              label: 'Відділення',
-              selected: category == 'Warehouse',
-              onTap: () => onCategoryChange('Warehouse'),
-              isDark: isDark,
-              cardBg: cardBg,
-              borderCol: borderCol,
-            ),
-            const SizedBox(width: 8),
-            _MiniTab(
-              label: 'Поштомат',
-              selected: category == 'Postomat',
-              onTap: () => onCategoryChange('Postomat'),
-              isDark: isDark,
-              cardBg: cardBg,
-              borderCol: borderCol,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // ── Warehouse Search ─────────────
-        _InputCard(
-          controller: warehouseCtrl,
-          focusNode: warehouseFocus,
-          label: category == 'Warehouse' ? 'Відділення' : 'Поштомат',
-          icon: Icons.store_mall_directory_outlined,
-          isDark: isDark,
-          cardBg: cardBg,
-          titleCol: titleCol,
-          subCol: subCol,
-          borderCol: borderCol,
-          onChanged: onWarehouseSearch,
-          validator: (v) => v == null || v.trim().isEmpty
-              ? 'Виберіть місце доставки'
-              : null,
-          suffix: loadingWarehouses
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(green),
-                  ),
-                )
-              : null,
-        ),
-        if (warehouseSuggestions.isNotEmpty)
-          _SuggestionList(
-            suggestions: warehouseSuggestions,
-            isDark: isDark,
-            cardBg: cardBg,
-            titleCol: titleCol,
-            subCol: subCol,
-            onSelect: onWarehouseSelect,
-            itemBuilder: (w) => Text(
-              w['Description'] ?? '',
-              style: TextStyle(
-                color: titleCol,
-                fontWeight: FontWeight.w500,
-                fontSize: 13,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _MiniTab extends StatelessWidget {
-  const _MiniTab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    required this.isDark,
-    required this.cardBg,
-    required this.borderCol,
-  });
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  final bool isDark;
-  final Color cardBg;
-  final Color borderCol;
-
-  @override
-  Widget build(BuildContext context) {
-    const green = Color(0xFF8CAF7B);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? green.withValues(alpha: 0.15) : cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: selected ? green : borderCol, width: 1.2),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: selected
-                ? green
-                : (isDark ? Colors.white70 : Colors.black54),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SuggestionList extends StatelessWidget {
-  const _SuggestionList({
-    required this.suggestions,
-    required this.onSelect,
-    required this.itemBuilder,
-    required this.isDark,
-    required this.cardBg,
-    required this.titleCol,
-    required this.subCol,
-  });
-  final List<dynamic> suggestions;
-  final Function(dynamic) onSelect;
-  final Widget Function(dynamic) itemBuilder;
-  final bool isDark;
-  final Color cardBg;
-  final Color titleCol;
-  final Color subCol;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 200),
-      margin: const EdgeInsets.only(top: 4),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: ListView.separated(
-          padding: EdgeInsets.zero,
-          shrinkWrap: true,
-          itemCount: suggestions.length,
-          separatorBuilder: (_, __) => Divider(
-            height: 1,
-            color: isDark ? Colors.white10 : Colors.black12,
-          ),
-          itemBuilder: (context, index) {
-            final item = suggestions[index];
-            return InkWell(
-              onTap: () => onSelect(item),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: itemBuilder(item),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-// ── UkrPoshta Fields ────────────────────────────────────────────
-
-class _UkrFields extends StatelessWidget {
-  const _UkrFields({
-    super.key,
-    required this.cityCtrl,
-    required this.indexCtrl,
-    required this.isDark,
-    required this.cardBg,
-    required this.titleCol,
-    required this.subCol,
-    required this.borderCol,
-  });
-
-  final TextEditingController cityCtrl;
-  final TextEditingController indexCtrl;
-  final bool isDark;
-  final Color cardBg;
-  final Color titleCol;
-  final Color subCol;
-  final Color borderCol;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _InputCard(
-          controller: cityCtrl,
-          label: 'Населений пункт',
-          icon: Icons.location_city_outlined,
-          isDark: isDark,
-          cardBg: cardBg,
-          titleCol: titleCol,
-          subCol: subCol,
-          borderCol: borderCol,
-          validator: (v) =>
-              v == null || v.trim().isEmpty ? 'Введіть населений пункт' : null,
-        ),
-        const SizedBox(height: 10),
-        _InputCard(
-          controller: indexCtrl,
-          label: 'Поштовий індекс',
-          icon: Icons.markunread_mailbox_outlined,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          isDark: isDark,
-          cardBg: cardBg,
-          titleCol: titleCol,
-          subCol: subCol,
-          borderCol: borderCol,
-          validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Введіть індекс';
-            if (v.trim().length < 5) return 'Індекс має містити 5 цифр';
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-}
 
 // ── Section Label ────────────────────────────────────────────────
 
@@ -1614,68 +1124,5 @@ class _UkrainianPhoneFormatter extends TextInputFormatter {
       text: result,
       selection: TextSelection.collapsed(offset: result.length),
     );
-  }
-}
-// ── Nova Poshta Service ─────────────────────────────────────────────────────
-
-class _NovaService {
-  static const String endpoint = 'https://api.novaposhta.ua/v2.0/json/';
-
-  // Publicly available search might not require a key if calling getSettlements,
-  // but for consistency we use an empty key or proxy if provided.
-  static const String _apiKey = 'd4096c654147d373e43076e0e9ef2be4';
-
-  static Future<List<dynamic>> searchSettlements(String query) async {
-    final body = {
-      "apiKey": _apiKey,
-      "modelName": "Address",
-      "calledMethod": "getSettlements",
-      "methodProperties": {"FindByString": query, "Limit": 150},
-    };
-    final resp = await http.post(Uri.parse(endpoint), body: jsonEncode(body));
-    final data = jsonDecode(resp.body);
-    if (data['success'] == true) return data['data'];
-    return [];
-  }
-
-  static Future<String?> resolveCityRef(String name, String area) async {
-    final body = {
-      "apiKey": _apiKey,
-      "modelName": "Address",
-      "calledMethod": "getCities",
-      "methodProperties": {"FindByString": name},
-    };
-    final resp = await http.post(Uri.parse(endpoint), body: jsonEncode(body));
-    final data = jsonDecode(resp.body);
-    if (data['success'] == true && data['data'] != null) {
-      final list = data['data'] as List;
-      final match = list.firstWhere(
-        (c) => c['AreaDescription'] == area || list.length == 1,
-        orElse: () => null,
-      );
-      return match?['Ref'];
-    }
-    return null;
-  }
-
-  static Future<List<dynamic>> getWarehouses(
-    String cityRef, {
-    String findByString = '',
-    String category = 'Warehouse',
-  }) async {
-    final body = {
-      "apiKey": _apiKey,
-      "modelName": "AddressGeneral",
-      "calledMethod": "getWarehouses",
-      "methodProperties": {
-        "CityRef": cityRef,
-        "FindByString": findByString,
-        "CategoryOfWarehouse": category,
-      },
-    };
-    final resp = await http.post(Uri.parse(endpoint), body: jsonEncode(body));
-    final data = jsonDecode(resp.body);
-    if (data['success'] == true) return data['data'];
-    return [];
   }
 }
