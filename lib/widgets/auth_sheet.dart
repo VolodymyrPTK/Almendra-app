@@ -73,10 +73,6 @@ class _AuthSheetState extends State<AuthSheet>
     if (ok && mounted) Navigator.pop(context);
   }
 
-  Future<void> _facebookSignIn() async {
-    final ok = await context.read<ap.AuthProvider>().signInWithFacebook();
-    if (ok && mounted) Navigator.pop(context);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -281,18 +277,6 @@ class _AuthSheetState extends State<AuthSheet>
                         label: 'Продовжити з Google',
                         icon: _GoogleIcon(),
                         onTap: auth.isLoading ? null : _googleSignIn,
-                        isDark: isDark,
-                        textColor: textColor,
-                        fieldBg: fieldBg,
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Facebook button
-                      _SocialButton(
-                        label: 'Продовжити з Facebook',
-                        icon: const Icon(Icons.facebook_rounded,
-                            size: 22, color: Color(0xFF1877F2)),
-                        onTap: auth.isLoading ? null : _facebookSignIn,
                         isDark: isDark,
                         textColor: textColor,
                         fieldBg: fieldBg,
@@ -509,58 +493,17 @@ class _SocialButton extends StatelessWidget {
   }
 }
 
-// ── Google Icon (coloured G) ───────────────────────────────────
+// ── Google Icon ────────────────────────────────────────────────
 
 class _GoogleIcon extends StatelessWidget {
+  const _GoogleIcon();
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Image.asset(
+      'assets/icon/google.png',
       width: 22,
       height: 22,
-      child: CustomPaint(painter: _GooglePainter()),
     );
   }
-}
-
-class _GooglePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final r = size.width / 2;
-
-    // Draw coloured arc segments
-    final segments = [
-      (0.0, 0.52, const Color(0xFF4285F4)),   // blue  (right)
-      (0.52, 0.52, const Color(0xFF34A853)),  // green (bottom)
-      (1.04, 0.52, const Color(0xFFFBBC05)),  // yellow (left)
-      (1.56, 0.52, const Color(0xFFEA4335)),  // red (top)
-    ];
-
-    for (final (start, sweep, color) in segments) {
-      final paint = Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.18;
-      canvas.drawArc(
-        Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.75),
-        start * 2,
-        sweep * 2,
-        false,
-        paint,
-      );
-    }
-
-    // White cutout for the G bar
-    final barPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    canvas.drawRect(
-      Rect.fromLTWH(cx, cy - size.height * 0.09, r * 0.75, size.height * 0.18),
-      barPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_GooglePainter _) => false;
 }

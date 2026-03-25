@@ -79,13 +79,25 @@ class AuthProvider extends ChangeNotifier {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      await _auth.signInWithCredential(credential);
+      
+      final userCredential = await _auth.signInWithCredential(credential);
+      
+      // Automatically create a Firestore profile for new Google users
+      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+        await FirebaseFirestore.instance
+            .collection('profiles')
+            .doc(userCredential.user!.uid)
+            .set({'email': userCredential.user!.email});
+      }
+      
       _setSuccess();
       return true;
     } on FirebaseAuthException catch (e) {
-      _setError(_signInMessage(e.code));
+      debugPrint('Google signIn error: ${e.code} | msg: ${e.message}');
+      _setError(_signInMessage(e.code, e.message));
       return false;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Google signIn raw error: $e');
       _setError('Не вдалося увійти через Google');
       return false;
     }
@@ -106,13 +118,31 @@ class AuthProvider extends ChangeNotifier {
       }
       final credential =
           FacebookAuthProvider.credential(result.accessToken!.tokenString);
-      await _auth.signInWithCredential(credential);
+          
+      final userCredential = await _auth.signInWithCredential(credential);
+      
+      // Automatically create a Firestore profile for new Facebook users
+      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+        await FirebaseFirestore.instance
+            .collection('profiles')
+            .doc(userCredential.user!.uid)
+            .set({'email': userCredential.user!.email});
+      }
+      
       _setSuccess();
       return true;
     } on FirebaseAuthException catch (e) {
-      _setError(_signInMessage(e.code));
+      debugPrint('FB signIn error: ${e.code} | msg: ${e.message}');
+      // For OAuth invalid-credential, we should show a specific message or raw message
+      // rather than the generic email/password message
+      if (e.code == 'invalid-credential') {
+        _setError('Недійсний токен авторизації. Перевірте налаштування Facebook у Firebase.');
+      } else {
+        _setError(_signInMessage(e.code, e.message));
+      }
       return false;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('FB signIn raw error: $e');
       _setError('Не вдалося увійти через Facebook');
       return false;
     }
@@ -158,7 +188,8 @@ class AuthProvider extends ChangeNotifier {
         'user-disabled' => 'Цей акаунт заблоковано',
         'too-many-requests' =>
           'Забагато спроб. Спробуйте пізніше або скиньте пароль',
-        'network-request-failed' => 'Перевірте підключення до мережі',
+        'account-exists-with-different-credential' =>
+          'Акаунт з таким email вже існує. Увійдіть через Google або як ви реєструвалися раніше',
         'operation-not-allowed' =>
           'Email/Password вхід не увімкнено у Firebase Console',
         'network-request-failed' => 'Перевірте підключення до мережі',
