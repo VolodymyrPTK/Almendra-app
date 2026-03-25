@@ -1358,23 +1358,7 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                               ),
                             ],
                           )
-                        : TextButton.icon(
-                            onPressed: () {
-                              widget.auth.signOut();
-                              Navigator.pop(context);
-                            },
-                            icon: Icon(Icons.logout_rounded,
-                                size: 16,
-                                color: Colors.red[400]),
-                            label: Text(
-                              'Вийти з акаунту',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.red[400],
-                              ),
-                            ),
-                          ),
+                        : const SizedBox.shrink(),
                   ),
                 ),
               ],
