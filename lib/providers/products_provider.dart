@@ -17,7 +17,7 @@ class ProductsProvider extends ChangeNotifier {
   bool _hasMore = true;
   String? _errorMessage;
   List<String>? _currentCategoryFilter;
-  List<String> _currentBooleanFilters = [];
+  final List<String> _currentBooleanFilters = [];
 
   List<Product> get products => _products;
   ProductsStatus get status => _status;

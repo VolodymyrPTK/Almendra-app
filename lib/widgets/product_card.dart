@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -80,10 +79,10 @@ class _ProductCardState extends State<ProductCard>
     // Core Neumorphic Colors — bright beige palette
     final Color baseColor = isDark ? const Color(0xFF302B26) : Colors.white;
     final Color lightShadow = isDark
-        ? Colors.white.withOpacity(0.08)
+        ? Colors.white.withValues(alpha: 0.08)
         : const Color(0xFFF5EFE6);
     final Color darkShadow = isDark
-        ? Colors.black.withOpacity(0.6)
+        ? Colors.black.withValues(alpha: 0.6)
         : const Color(0xFFAEA598);
     final Color textColor = isDark ? Colors.white : const Color(0xFF3B3228);
     final Color subTextColor = isDark
@@ -115,7 +114,7 @@ class _ProductCardState extends State<ProductCard>
               // Soft ambient shadow for depth
               BoxShadow(
                 color: (isDark ? Colors.black : const Color(0xFFC0B8AB))
-                    .withOpacity(0.35),
+                    .withValues(alpha: 0.35),
                 offset: const Offset(0, 8),
                 blurRadius: 20,
                 spreadRadius: 2,
@@ -146,14 +145,14 @@ class _ProductCardState extends State<ProductCard>
                             errorWidget: (_, __, ___) => Icon(
                               Icons.restaurant_rounded,
                               size: 48,
-                              color: textColor.withOpacity(0.2),
+                              color: textColor.withValues(alpha: 0.2),
                             ),
                           ),
                         )
                       : Icon(
                           Icons.restaurant_rounded,
                           size: 48,
-                          color: textColor.withOpacity(0.2),
+                          color: textColor.withValues(alpha: 0.2),
                         ),
                 ),
               ),
@@ -215,7 +214,7 @@ class _ProductCardState extends State<ProductCard>
                           color: baseColor,
                           borderRadius: BorderRadius.circular(19),
                           border: Border.all(
-                            color: darkShadow.withOpacity(0.3),
+                            color: darkShadow.withValues(alpha: 0.3),
                             width: 0.5,
                           ),
                         ),
@@ -226,7 +225,7 @@ class _ProductCardState extends State<ProductCard>
                             gradient: LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [darkShadow.withOpacity(0.15), baseColor],
+                              colors: [darkShadow.withValues(alpha: 0.15), baseColor],
                             ),
                           ),
                           child: Center(
@@ -267,12 +266,12 @@ class _ProductCardState extends State<ProductCard>
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF8CAF7B).withOpacity(0.4),
+                              color: const Color(0xFF8CAF7B).withValues(alpha: 0.4),
                               offset: const Offset(3, 3),
                               blurRadius: 8,
                             ),
                             BoxShadow(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               offset: const Offset(-2, -2),
                               blurRadius: 4,
                             ),

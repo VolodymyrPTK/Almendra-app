@@ -68,7 +68,7 @@ class _ProductDetailSheetState extends State<ProductDetailSheet>
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 30,
               offset: const Offset(0, -8),
             ),
@@ -83,7 +83,7 @@ class _ProductDetailSheetState extends State<ProductDetailSheet>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: subTextColor.withOpacity(0.3),
+                  color: subTextColor.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -121,7 +121,7 @@ class _ProductDetailSheetState extends State<ProductDetailSheet>
                                 errorWidget: (_, __, ___) => Icon(
                                   Icons.image_not_supported_outlined,
                                   size: 48,
-                                  color: subTextColor.withOpacity(0.3),
+                                  color: subTextColor.withValues(alpha: 0.3),
                                 ),
                               ),
                             ),
@@ -208,7 +208,7 @@ class _ProductDetailSheetState extends State<ProductDetailSheet>
                         if (product.kcal != null)
                           _NutritionCircle(
                             label: 'Ккал',
-                            value: '${product.kcal!.toStringAsFixed(0)}',
+                            value: product.kcal!.toStringAsFixed(0),
                             color: const Color(0xFFE8734A),
                             isDark: isDark,
                           ),
@@ -395,7 +395,7 @@ class _ProductDetailSheetState extends State<ProductDetailSheet>
                           borderRadius: BorderRadius.circular(26),
                           boxShadow: [
                             BoxShadow(
-                              color: accentGreen.withOpacity(0.35),
+                              color: accentGreen.withValues(alpha: 0.35),
                               offset: const Offset(0, 6),
                               blurRadius: 16,
                             ),
@@ -555,7 +555,7 @@ class _AnimatedBubble extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.14),
+                  color: Colors.black.withValues(alpha: 0.14),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -648,8 +648,8 @@ class _NutritionCircle extends StatelessWidget {
             height: 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: color.withOpacity(isDark ? 0.15 : 0.1),
-              border: Border.all(color: color.withOpacity(0.4), width: 2),
+              color: color.withValues(alpha: isDark ? 0.15 : 0.1),
+              border: Border.all(color: color.withValues(alpha: 0.4), width: 2),
             ),
             child: Center(
               child: Text(

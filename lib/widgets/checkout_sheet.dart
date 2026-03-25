@@ -94,7 +94,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
         if (!mounted) return;
         final FocusNode currentFocus = _cityFocus.hasFocus ? _cityFocus : _warehouseFocus;
         final context = currentFocus.context;
-        if (context != null) {
+        if (context != null && context.mounted) {
           Scrollable.ensureVisible(
             context,
             alignment: 0.0, // Move it to the very top of the scroll viewport
@@ -469,7 +469,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.20),
+                  color: Colors.black.withValues(alpha: 0.20),
                   blurRadius: 30,
                   offset: const Offset(-6, 0),
                 ),
@@ -560,8 +560,8 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                           border: Border.all(color: borderCol, width: 1.2),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(
-                                isDark ? 0.25 : 0.06,
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.25 : 0.06,
                               ),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
@@ -663,8 +663,9 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                                     RegExp(r'\D'),
                                     '',
                                   );
-                                  if (digits.length < 12)
+                                  if (digits.length < 12) {
                                     return 'Некоректний номер';
+                                  }
                                   return null;
                                 },
                               ),
@@ -760,11 +761,12 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                                           setState(
                                             () => _warehouseCategory = c,
                                           );
-                                          if (_selectedCityRef != null)
+                                          if (_selectedCityRef != null) {
                                             _fetchWarehouses(
                                               '',
                                               _selectedCityRef!,
                                             );
+                                          }
                                         },
                                       )
                                     : _UkrFields(
@@ -800,7 +802,9 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                           Expanded(
                             child: GestureDetector(
                               onTap: _isLoading ? null : () {
-                                if (!_formKey.currentState!.validate()) return;
+                                if (!_formKey.currentState!.validate()) {
+                                  return;
+                                }
                                 // validate delivery selection
                                 if (_delivery == _Delivery.nova && (_novaCityCtrl.text.isEmpty || _novaWarehouseCtrl.text.isEmpty)) {
                                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Оберіть відділення Нової Пошти')));
@@ -819,14 +823,14 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                                   color: _isLoading
                                       ? const Color(
                                           0xFF8CAF7B,
-                                        ).withOpacity(0.6)
+                                        ).withValues(alpha: 0.6)
                                       : const Color(0xFF8CAF7B),
                                   borderRadius: BorderRadius.circular(25),
                                   boxShadow: [
                                     BoxShadow(
                                       color: const Color(
                                         0xFF8CAF7B,
-                                      ).withOpacity(0.4),
+                                      ).withValues(alpha: 0.4),
                                       blurRadius: 14,
                                       offset: const Offset(0, 5),
                                     ),
@@ -937,7 +941,7 @@ class _InputCard extends StatelessWidget {
         border: Border.all(color: borderCol, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.22 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -1015,7 +1019,7 @@ class _DeliveryChip extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? green.withOpacity(0.12) : cardBg,
+          color: selected ? green.withValues(alpha: 0.12) : cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected ? green : borderCol,
@@ -1024,8 +1028,8 @@ class _DeliveryChip extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: selected
-                  ? green.withOpacity(0.20)
-                  : Colors.black.withOpacity(isDark ? 0.22 : 0.05),
+                  ? green.withValues(alpha: 0.20)
+                  : Colors.black.withValues(alpha: isDark ? 0.22 : 0.05),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -1037,7 +1041,7 @@ class _DeliveryChip extends StatelessWidget {
             Icon(
               icon,
               size: 18,
-              color: selected ? green : titleCol.withOpacity(0.6),
+              color: selected ? green : titleCol.withValues(alpha: 0.6),
             ),
             const SizedBox(width: 8),
             Flexible(
@@ -1260,7 +1264,7 @@ class _MiniTab extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? green.withOpacity(0.15) : cardBg,
+          color: selected ? green.withValues(alpha: 0.15) : cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: selected ? green : borderCol, width: 1.2),
         ),
@@ -1453,7 +1457,7 @@ class _SuccessView extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF8CAF7B).withOpacity(0.15),
+                color: const Color(0xFF8CAF7B).withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -1491,7 +1495,7 @@ class _SuccessView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(25),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF8CAF7B).withOpacity(0.4),
+                      color: const Color(0xFF8CAF7B).withValues(alpha: 0.4),
                       blurRadius: 14,
                       offset: const Offset(0, 5),
                     ),

@@ -12,7 +12,7 @@ class PaymentOptionsView extends StatefulWidget {
   final bool isLoading;
 
   const PaymentOptionsView({
-    Key? key,
+    super.key,
     required this.cart,
     required this.isDark,
     required this.contactName,
@@ -21,7 +21,7 @@ class PaymentOptionsView extends StatefulWidget {
     required this.onPayLiqPay,
     required this.onPayCash,
     required this.isLoading,
-  }) : super(key: key);
+  });
 
   @override
   State<PaymentOptionsView> createState() => _PaymentOptionsViewState();
@@ -92,7 +92,7 @@ class _PaymentOptionsViewState extends State<PaymentOptionsView> {
                     border: Border.all(color: borderCol, width: 1.2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(widget.isDark ? 0.25 : 0.05),
+                        color: Colors.black.withValues(alpha: widget.isDark ? 0.25 : 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -156,7 +156,7 @@ class _PaymentOptionsViewState extends State<PaymentOptionsView> {
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: _selectedPayment == 'liqpay' ? highlightCol.withOpacity(0.1) : cardBg,
+                      color: _selectedPayment == 'liqpay' ? highlightCol.withValues(alpha: 0.1) : cardBg,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: _selectedPayment == 'liqpay' ? highlightCol : borderCol,
@@ -193,7 +193,7 @@ class _PaymentOptionsViewState extends State<PaymentOptionsView> {
                         ),
                         Icon(
                           _selectedPayment == 'liqpay' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                          color: _selectedPayment == 'liqpay' ? highlightCol : subCol.withOpacity(0.5),
+                          color: _selectedPayment == 'liqpay' ? highlightCol : subCol.withValues(alpha: 0.5),
                         ),
                       ],
                     ),
@@ -208,7 +208,7 @@ class _PaymentOptionsViewState extends State<PaymentOptionsView> {
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: _selectedPayment == 'cash' ? highlightCol.withOpacity(0.1) : cardBg,
+                      color: _selectedPayment == 'cash' ? highlightCol.withValues(alpha: 0.1) : cardBg,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: _selectedPayment == 'cash' ? highlightCol : borderCol,
@@ -221,10 +221,10 @@ class _PaymentOptionsViewState extends State<PaymentOptionsView> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(Icons.money, color: titleCol.withOpacity(0.7)),
+                          child: Icon(Icons.money, color: titleCol.withValues(alpha: 0.7)),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -238,7 +238,7 @@ class _PaymentOptionsViewState extends State<PaymentOptionsView> {
                         ),
                         Icon(
                           _selectedPayment == 'cash' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                          color: _selectedPayment == 'cash' ? highlightCol : subCol.withOpacity(0.5),
+                          color: _selectedPayment == 'cash' ? highlightCol : subCol.withValues(alpha: 0.5),
                         ),
                       ],
                     ),
@@ -267,11 +267,11 @@ class _PaymentOptionsViewState extends State<PaymentOptionsView> {
               duration: const Duration(milliseconds: 200),
               height: 52,
               decoration: BoxDecoration(
-                color: widget.isLoading ? highlightCol.withOpacity(0.6) : highlightCol,
+                color: widget.isLoading ? highlightCol.withValues(alpha: 0.6) : highlightCol,
                 borderRadius: BorderRadius.circular(26),
                 boxShadow: [
                   BoxShadow(
-                    color: highlightCol.withOpacity(0.4),
+                    color: highlightCol.withValues(alpha: 0.4),
                     blurRadius: 14,
                     offset: const Offset(0, 5),
                   ),
