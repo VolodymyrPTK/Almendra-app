@@ -5,8 +5,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:crypto/crypto.dart';
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart' as ap;
+import 'payment_options_view.dart';
+import 'liqpay_webview.dart';
 
 enum _Delivery { nova, ukr }
 
@@ -61,6 +64,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
   _Delivery _delivery = _Delivery.nova;
   bool _isLoading = false;
   bool _success = false;
+  bool _showPaymentOptions = false;
 
   final ScrollController _scrollCtrl = ScrollController();
   final FocusNode _cityFocus = FocusNode();
@@ -156,8 +160,66 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
     return '$d/$mo/$y, $h:$mi';
   }
 
-  Future<void> _submit(CartProvider cart) async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<bool> _runLiqPayFlow(double amount, int orderId) async {
+    const publicKey = 'sandbox_i56605069158';
+    const privateKey = 'sandbox_8d0buaoFZlnm5t3zDZ7IrpdVuNZrsnlZZSr0nIHN';
+    final liqpayOrderId = '${orderId}_${DateTime.now().millisecondsSinceEpoch}';
+    
+    final jsonString = jsonEncode({
+      'version': 3,
+      'public_key': publicKey,
+      'action': 'pay',
+      'amount': amount,
+      'currency': 'UAH',
+      'description': 'Замовлення #$orderId',
+      'order_id': liqpayOrderId,
+      'result_url': 'https://almendra-app.web.app/payment-success',
+    });
+    
+    final data = base64Encode(utf8.encode(jsonString));
+    final signString = privateKey + data + privateKey;
+    final signature = base64Encode(sha1.convert(utf8.encode(signString)).bytes);
+
+    if (!mounted) return false;
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => LiqPayWebView(data: data, signature: signature)),
+    );
+    
+    // Webview closed. Verify actual status via Server-to-Server request
+    return await _verifyLiqPayStatus(liqpayOrderId);
+  }
+
+  Future<bool> _verifyLiqPayStatus(String orderId) async {
+    const publicKey = 'sandbox_i56605069158';
+    const privateKey = 'sandbox_8d0buaoFZlnm5t3zDZ7IrpdVuNZrsnlZZSr0nIHN';
+    final jsonString = jsonEncode({
+      'action': 'status',
+      'version': 3,
+      'public_key': publicKey,
+      'order_id': orderId,
+    });
+    
+    final data = base64Encode(utf8.encode(jsonString));
+    final signString = privateKey + data + privateKey;
+    final signature = base64Encode(sha1.convert(utf8.encode(signString)).bytes);
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://www.liqpay.ua/api/request'),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {'data': data, 'signature': signature},
+      );
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        final status = decoded['status'];
+        return status == 'success' || status == 'sandbox' || status == 'wait_accept' || status == 'wait_secure';
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  Future<void> _submit(CartProvider cart, String paymentMethod) async {
+    // If it's already shown the payment options, form is valid.
     setState(() => _isLoading = true);
 
     try {
@@ -202,6 +264,17 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
         lastId = 0;
       }
 
+      if (paymentMethod == 'liqpay') {
+        final success = await _runLiqPayFlow(cart.total, lastId + 1);
+        if (!success) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Оплату скасовано')));
+          }
+          return;
+        }
+      }
+
       final orderRef = ordersCol.doc();
       final orderData = {
         'orderId': lastId + 1,
@@ -226,9 +299,9 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
         },
         'items': cart.items.map((e) => e.toMap()).toList(),
         'total': cart.total,
-        'payment': 'payLater',
+        'payment': paymentMethod == 'liqpay' ? 'liqpay' : 'payLater',
         'orderStatus': 'Processing',
-        'paymentStatus': 'cash_on_delivery',
+        'paymentStatus': paymentMethod == 'liqpay' ? 'liqpay_pending' : 'cash_on_delivery',
         'userType': 'authenticated',
         'oblast': '',
         'raion': '',
@@ -244,11 +317,13 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
       // 3. Clear the cart
       await db.collection('profiles').doc(uid).update({'cart': []});
 
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isLoading = false;
           _success = true;
+          _showPaymentOptions = false;
         });
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -407,6 +482,23 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                     titleCol: titleCol,
                     subCol: subCol,
                     onClose: () => Navigator.pop(context),
+                  );
+                }
+                if (_showPaymentOptions) {
+                  final contactName = '${_firstNameCtrl.text} ${_secondNameCtrl.text}';
+                  final deliveryText = _delivery == _Delivery.nova
+                      ? 'Нова Пошта: ${_novaCityCtrl.text}, ${_novaWarehouseCtrl.text}'
+                      : 'Укрпошта: ${_ukrCityCtrl.text}, Індекс ${_ukrIndexCtrl.text}';
+                  
+                  return PaymentOptionsView(
+                    cart: cart,
+                    isDark: isDark,
+                    contactName: contactName,
+                    deliveryText: deliveryText,
+                    onBack: () => setState(() => _showPaymentOptions = false),
+                    onPayLiqPay: () => _submit(cart, 'liqpay'),
+                    onPayCash: () => _submit(cart, 'cash'),
+                    isLoading: _isLoading,
                   );
                 }
                 return Column(
@@ -707,7 +799,19 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onTap: _isLoading ? null : () => _submit(cart),
+                              onTap: _isLoading ? null : () {
+                                if (!_formKey.currentState!.validate()) return;
+                                // validate delivery selection
+                                if (_delivery == _Delivery.nova && (_novaCityCtrl.text.isEmpty || _novaWarehouseCtrl.text.isEmpty)) {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Оберіть відділення Нової Пошти')));
+                                  return;
+                                }
+                                if (_delivery == _Delivery.ukr && (_ukrCityCtrl.text.isEmpty || _ukrIndexCtrl.text.isEmpty)) {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Введіть місто та індекс Укрпошти')));
+                                  return;
+                                }
+                                setState(() => _showPaymentOptions = true);
+                              },
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
                                 height: 50,
