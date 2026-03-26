@@ -10,10 +10,18 @@
       "client_info": {
         "mobilesdk_app_id": "1:673059035521:android:4f7216b7e0600cf6e47080",
         "android_client_info": {
-          "package_name": "com.almendra.app"
+          "package_name": "com.example.almendra"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "673059035521-iigk3t45tfcq5bknarr1lh6m1kcunjhq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.almendra",
+            "certificate_hash": "e8d2fbeab670af76ad84bb0d59c538ad341da39e"
+          }
+        },
         {
           "client_id": "673059035521-ft1dskjsdvjgeitj2mvu1f8pdr6ci9rk.apps.googleusercontent.com",
           "client_type": 3
@@ -32,10 +40,10 @@
               "client_type": 3
             },
             {
-              "client_id": "673059035521-l259hpn2gd5tdk3b5a7dno8r5fh5r1kf.apps.googleusercontent.com",
+              "client_id": "673059035521-7jhplak26g6ii2bno259t90tpuqm69g6.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.mycompany.almendra"
+                "bundle_id": "com.example.almendra"
               }
             }
           ]

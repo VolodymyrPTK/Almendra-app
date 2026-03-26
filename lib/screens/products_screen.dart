@@ -776,43 +776,6 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                             color: titleCol,
                           )),
                       ),
-                      if (_tab == _ProfileTab.info)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 16),
-                          child: GestureDetector(
-                            onTap: _saving ? null : () {
-                              if (_editing) _save();
-                              else setState(() => _editing = true);
-                            },
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              child: _editing
-                                ? _saving
-                                  ? const SizedBox(width: 20, height: 20, 
-                                      child: CircularProgressIndicator(strokeWidth: 2, 
-                                        valueColor: AlwaysStoppedAnimation(green)))
-                                  : Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: green.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Text('Зберегти', style: TextStyle(
-                                        color: green, fontSize: 13, fontWeight: FontWeight.w800,
-                                      )),
-                                    )
-                                : Container(
-                                    width: 36, height: 36,
-                                    decoration: BoxDecoration(
-                                      color: cardBg,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: borderCol, width: 1.2),
-                                    ),
-                                    child: Icon(Icons.edit_outlined, size: 18, color: titleCol),
-                                  ),
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ),

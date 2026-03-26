@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
@@ -15,8 +16,12 @@ class AuthProvider extends ChangeNotifier {
   // and request broad Google Cloud Platform scopes.
   final _googleSignIn = GoogleSignIn(
     scopes: ['email'],
-    // iOS CLIENT_ID from GoogleService-Info.plist
-    clientId: '673059035521-7jhplak26g6ii2bno259t90tpuqm69g6.apps.googleusercontent.com',
+    // Providing clientId is required for iOS/macOS but should be omitted on Android 
+    // to allow it to read from google-services.json automatically.
+    clientId: (TargetPlatform.iOS == defaultTargetPlatform || 
+               TargetPlatform.macOS == defaultTargetPlatform)
+        ? '673059035521-7jhplak26g6ii2bno259t90tpuqm69g6.apps.googleusercontent.com'
+        : null,
   );
 
   AuthStatus _status = AuthStatus.idle;
