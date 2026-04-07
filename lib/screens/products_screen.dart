@@ -83,7 +83,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(100),
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
                           height: 40,
@@ -93,13 +93,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           constraints: const BoxConstraints(minWidth: 40),
                           decoration: BoxDecoration(
                             color: isDark
-                                ? Colors.white.withValues(alpha: 0.05)
-                                : Colors.white.withValues(alpha: 0.4),
+                                ? Colors.black.withValues(alpha: 0.6)
+                                : Colors.white.withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(100),
                             border: Border.all(
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.white.withValues(alpha: 0.6),
+                                  ? Colors.white.withValues(alpha: 0.15)
+                                  : Colors.black.withValues(alpha: 0.05),
                               width: 1.5,
                             ),
                           ),

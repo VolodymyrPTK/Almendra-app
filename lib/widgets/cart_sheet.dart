@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -17,7 +18,7 @@ class CartSheet extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Cart',
-      barrierColor: Colors.black45,
+      barrierColor: Colors.transparent,
       transitionDuration: const Duration(milliseconds: 320),
       pageBuilder: (_, __, ___) => MultiProvider(
         providers: [
@@ -48,7 +49,6 @@ class _CartContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark   = Theme.of(context).brightness == Brightness.dark;
-    final panelBg  = isDark ? const Color(0xFF1E1A17) : const Color(0xFFF0EAE2);
     final cardBg   = isDark ? const Color(0xFF2A2420) : Colors.white;
     final titleCol = isDark ? Colors.white : const Color(0xFF2B2118);
     final subCol   = isDark ? Colors.white70 : const Color(0xFF5A5047);
@@ -60,23 +60,37 @@ class _CartContent extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(12, topPad, 12, 16),
       child: Material(
         color: Colors.transparent,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              color: panelBg,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.20),
-                  blurRadius: 30,
-                  offset: const Offset(-6, 0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.20),
+                blurRadius: 30,
+                offset: const Offset(-6, 0),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.white.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.white.withValues(alpha: 0.6),
+                    width: 1.5,
+                  ),
                 ),
-              ],
-            ),
-            child: Consumer2<CartProvider, ap.AuthProvider>(
+                child: Consumer2<CartProvider, ap.AuthProvider>(
               builder: (context, cart, auth, _) => Column(
                     children: [
                       // ── Title ─────────────────────────────────
@@ -138,7 +152,9 @@ class _CartContent extends StatelessWidget {
               ),
             ),
           ),
-        );
+        ),
+      ),
+    );
   }
 }
 
@@ -186,119 +202,138 @@ class _ItemCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
         children: [
-          // Product name
-          Text(
-            item.name,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: titleCol,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Controls row
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Thumbnail
+              // Large Thumbnail on the left
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
                 child: SizedBox(
-                  width: 38,
-                  height: 38,
+                  width: 65,
+                  height: 65,
                   child: item.image != null
                       ? CachedNetworkImage(
                           imageUrl: item.image!,
-                          fit: BoxFit.contain,
+                          fit: BoxFit.cover,
                           errorWidget: (_, __, ___) => Icon(
                             Icons.image_not_supported_outlined,
-                            size: 18,
+                            size: 24,
                             color: subCol.withValues(alpha: 0.5),
                           ),
                         )
-                      : Icon(Icons.image_not_supported_outlined,
-                          size: 18,
-                          color: subCol.withValues(alpha: 0.5)),
+                      : Icon(
+                          Icons.image_not_supported_outlined,
+                          size: 24,
+                          color: subCol.withValues(alpha: 0.5),
+                        ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
 
-              // Unit price
-              Flexible(
-                child: Text(
-                  unitPrice,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: titleCol,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-
-              // Qty pill  [- | N шт | +]
+              // Title and Controls right column
               Expanded(
-                flex: 2,
-                child: Container(
-                  height: 34,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: borderCol, width: 1.2),
-                    borderRadius: BorderRadius.circular(17),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                child: SizedBox(
+                  height: 65, // Enforce fixed vertical layout mirroring the image precisely
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _PillBtn(label: '−', onTap: onDecrement, color: subCol),
-                      Text(
-                        '${item.quantity} шт',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: titleCol,
+                      // Product name (Strict 1 line)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 24, top: 0),
+                        child: Text(
+                          item.name,
+                          textAlign: TextAlign.start,
+                          maxLines: 1, // Fix text growth
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15, // Prominent primary naming
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2, // Professional sleek tracking
+                            color: titleCol,
+                          ),
                         ),
                       ),
-                      _PillBtn(label: '+', onTap: onIncrement,
-                          color: const Color(0xFF8CAF7B)),
+
+                      // Controls row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center, // Vertically center price and total to the middle of the pill
+                        children: [
+                          // Unit price (Subdued secondary metric)
+                          Text(
+                            unitPrice,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: subCol.withValues(alpha: 0.8), // Softer base price
+                            ),
+                          ),
+                          
+                          // Qty pill
+                          Container(
+                            height: 34,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: borderCol, width: 1.2),
+                              borderRadius: BorderRadius.circular(17),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _PillBtn(label: '−', onTap: onDecrement, color: subCol),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  child: Text(
+                                    '${item.quantity} шт',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: titleCol,
+                                    ),
+                                  ),
+                                ),
+                                _PillBtn(label: '+', onTap: onIncrement,
+                                    color: const Color(0xFF8CAF7B)),
+                              ],
+                            ),
+                          ),
+                          
+                          // Line total (Prominent primary metric)
+                          Text(
+                            lineTotal,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: titleCol,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
-
-              // Line total
-              Flexible(
-                child: Text(
-                  lineTotal,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: titleCol,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 2),
-
-              // Delete
-              GestureDetector(
-                onTap: onRemove,
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(
-                    Icons.delete_outline_rounded,
-                    size: 20,
-                    color: subCol.withValues(alpha: 0.7),
-                  ),
-                ),
-              ),
             ],
+          ),
+
+          // Delete Button Top Right
+          Positioned(
+            top: -6,
+            right: -6,
+            child: GestureDetector(
+              onTap: onRemove,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 20,
+                  color: subCol.withValues(alpha: 0.7),
+                ),
+              ),
+            ),
           ),
         ],
       ),
