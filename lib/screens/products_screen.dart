@@ -79,42 +79,27 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(100),
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
                           height: 40,
                           padding: EdgeInsets.symmetric(
                             horizontal: hasItems ? 14 : 0,
                           ),
-                          constraints: const BoxConstraints(
-                            minWidth: 40,
-                          ),
+                          constraints: const BoxConstraints(minWidth: 40),
                           decoration: BoxDecoration(
-                            color: hasItems
-                                ? const Color(0xFF8CAF7B).withValues(alpha: 0.7)
-                                : (isDark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.white.withValues(alpha: 0.7)),
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.white.withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(100),
                             border: Border.all(
-                              color: hasItems
-                                  ? const Color(
-                                      0xFF8CAF7B,
-                                    ).withValues(alpha: 0.9)
-                                  : (isDark
-                                        ? Colors.white.withValues(alpha: 0.2)
-                                        : Colors.white.withValues(alpha: 0.9)),
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.white.withValues(alpha: 0.6),
                               width: 1.5,
                             ),
                           ),
@@ -129,7 +114,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                   Icons.shopping_bag_outlined,
                                   size: 20,
                                   color: hasItems
-                                      ? Colors.white
+                                      ? const Color(0xFF8CAF7B)
                                       : (isDark
                                             ? Colors.white
                                             : const Color(0xFF3B3228)),
@@ -142,7 +127,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.white,
+                                        color: Color(0xFF8CAF7B),
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.visible,
@@ -173,32 +158,25 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       ? _showUserMenu(context, auth)
                       : AuthSheet.show(context),
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(100),
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                         child: Container(
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: isDark
-                                ? Colors.white.withValues(alpha: 0.1)
-                                : Colors.white.withValues(alpha: 0.7),
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.white.withValues(alpha: 0.4),
                             border: Border.all(
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.2)
-                                  : Colors.white.withValues(alpha: 0.9),
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.white.withValues(alpha: 0.6),
                               width: 1.5,
                             ),
                           ),
@@ -232,25 +210,24 @@ class _ProductsScreenState extends State<ProductsScreen> {
         ],
         flexibleSpace: ClipRRect(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
               decoration: BoxDecoration(
+
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.white.withValues(alpha: 0.05)
                     : Colors.white.withValues(alpha: 0.4),
-                border: Border(
+                border: const Border(
                   bottom: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.white.withValues(alpha: 0.5),
-                    width: 1.5,
+                    color: Colors.transparent,
+                    width: 0,
                   ),
                 ),
               ),
             ),
           ),
         ),
-        toolbarHeight: 80,
+        toolbarHeight: 56,
       ),
       body: Stack(
         children: [
@@ -342,6 +319,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
           SafeArea(
             bottom: false,
+            top: false,
             child: Consumer<ProductsProvider>(
               builder: (context, provider, _) {
                 return switch (provider.status) {
@@ -396,11 +374,13 @@ class _ProductList extends StatelessWidget {
       );
     }
 
+    final topPadding = MediaQuery.paddingOf(context).top + 16;
+    
     return RefreshIndicator(
       onRefresh: provider.loadProducts,
       child: GridView.builder(
         controller: scrollController,
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
+        padding: EdgeInsets.fromLTRB(16, topPadding, 16, 140),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           mainAxisSpacing: 14,
@@ -461,16 +441,22 @@ class _ErrorView extends StatelessWidget {
                   ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
-                if (message!.contains('https://console.firebase.google.com')) ...[
+                if (message!.contains(
+                  'https://console.firebase.google.com',
+                )) ...[
                   const SizedBox(height: 16),
                   Builder(
                     builder: (btnContext) {
-                      final urlRegex = RegExp(r'https://console\.firebase\.google\.com/[^\s]+');
+                      final urlRegex = RegExp(
+                        r'https://console\.firebase\.google\.com/[^\s]+',
+                      );
                       final match = urlRegex.firstMatch(message!);
                       if (match != null) {
                         return FilledButton.tonalIcon(
                           onPressed: () {
-                            Clipboard.setData(ClipboardData(text: match.group(0)!));
+                            Clipboard.setData(
+                              ClipboardData(text: match.group(0)!),
+                            );
                             ScaffoldMessenger.of(btnContext).showSnackBar(
                               const SnackBar(
                                 content: Text('Посилання скопійовано!'),
@@ -536,29 +522,29 @@ class _UserProfileSheet extends StatefulWidget {
 }
 
 class _UserProfileSheetState extends State<_UserProfileSheet> {
-  final _firstNameCtrl  = TextEditingController();
+  final _firstNameCtrl = TextEditingController();
   final _secondNameCtrl = TextEditingController();
-  final _phoneCtrl      = TextEditingController();
+  final _phoneCtrl = TextEditingController();
 
   _ProfileTab _tab = _ProfileTab.orders;
-  bool _editing    = false;
-  bool _loading    = true;
-  bool _saving     = false;
-  
+  bool _editing = false;
+  bool _loading = true;
+  bool _saving = false;
+
   // -- Delivery State --
   final _novaCityCtrl = TextEditingController();
   final _novaWarehouseCtrl = TextEditingController();
   final _ukrCityCtrl = TextEditingController();
   final _ukrIndexCtrl = TextEditingController();
-  
+
   final _cityFocus = FocusNode();
   final _warehouseFocus = FocusNode();
-  
+
   String _deliveryOption = 'novaPoshta'; // 'novaPoshta' or 'ukrPoshta'
   String _warehouseCategory = 'Warehouse';
   String? _selectedCityRef;
   String? _selectedWarehouseIndex;
-  
+
   List<dynamic> _citySuggestions = [];
   List<dynamic> _warehouseSuggestions = [];
   bool _loadingCities = false;
@@ -572,26 +558,34 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
 
   Future<void> _loadProfile() async {
     final uid = widget.auth.user?.uid;
-    if (uid == null) { setState(() => _loading = false); return; }
+    if (uid == null) {
+      setState(() => _loading = false);
+      return;
+    }
     try {
       final doc = await FirebaseFirestore.instance
-          .collection('profiles').doc(uid).get();
+          .collection('profiles')
+          .doc(uid)
+          .get();
       final data = doc.data() ?? {};
       if (mounted) {
-        _firstNameCtrl.text  = data['firstName']  as String? ?? '';
+        _firstNameCtrl.text = data['firstName'] as String? ?? '';
         _secondNameCtrl.text = data['secondName'] as String? ?? '';
-        _phoneCtrl.text      = data['phone']       as String? ?? '';
-        
+        _phoneCtrl.text = data['phone'] as String? ?? '';
+
         _deliveryOption = data['deliveryOption'] as String? ?? 'novaPoshta';
         _novaCityCtrl.text = data['city'] as String? ?? '';
         _novaWarehouseCtrl.text = data['warehouse'] as String? ?? '';
-        _ukrCityCtrl.text = (data['deliveryOption'] == 'ukrPoshta' ? data['city'] : '') as String? ?? '';
+        _ukrCityCtrl.text =
+            (data['deliveryOption'] == 'ukrPoshta' ? data['city'] : '')
+                as String? ??
+            '';
         _ukrIndexCtrl.text = data['cityIndex'] as String? ?? '';
-        
+
         _selectedCityRef = data['cityRef'] as String?;
         _selectedWarehouseIndex = data['warehouseIndex'] as String?;
         _warehouseCategory = data['postType'] as String? ?? 'Warehouse';
-        
+
         setState(() => _loading = false);
       }
     } catch (_) {
@@ -602,7 +596,7 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
   Stream<List<Map<String, dynamic>>> _ordersStream() {
     final uid = widget.auth.user?.uid;
     if (uid == null) return const Stream.empty();
-    
+
     // Fallback logic for stream: union if email exists
     return FirebaseFirestore.instance
         .collection('orders')
@@ -610,10 +604,10 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
         .snapshots()
         .map((snap) {
           final list = snap.docs.map((doc) => doc.data()).toList();
-          
+
           // Optionally add email matches if list by UID is small/empty
           // (More complex to do real OR query in Stream, but this covers basic UID sync)
-          
+
           list.sort((a, b) {
             final idA = (a['orderId'] as num?)?.toInt() ?? 0;
             final idB = (b['orderId'] as num?)?.toInt() ?? 0;
@@ -628,22 +622,25 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
     if (uid == null) return;
     setState(() => _saving = true);
     try {
-      await FirebaseFirestore.instance
-          .collection('profiles')
-          .doc(uid)
-          .set({
-            'firstName'      : _firstNameCtrl.text.trim(),
-            'secondName'     : _secondNameCtrl.text.trim(),
-            'phone'          : _phoneCtrl.text.trim(),
-            'deliveryOption' : _deliveryOption,
-            'city'           : _deliveryOption == 'novaPoshta' ? _novaCityCtrl.text.trim() : _ukrCityCtrl.text.trim(),
-            'warehouse'      : _novaWarehouseCtrl.text.trim(),
-            'cityIndex'      : _ukrIndexCtrl.text.trim(),
-            'cityRef'        : _selectedCityRef ?? '',
-            'warehouseIndex' : _selectedWarehouseIndex ?? '',
-            'postType'       : _warehouseCategory,
-          }, SetOptions(merge: true));
-      if (mounted) setState(() { _saving = false; _editing = false; });
+      await FirebaseFirestore.instance.collection('profiles').doc(uid).set({
+        'firstName': _firstNameCtrl.text.trim(),
+        'secondName': _secondNameCtrl.text.trim(),
+        'phone': _phoneCtrl.text.trim(),
+        'deliveryOption': _deliveryOption,
+        'city': _deliveryOption == 'novaPoshta'
+            ? _novaCityCtrl.text.trim()
+            : _ukrCityCtrl.text.trim(),
+        'warehouse': _novaWarehouseCtrl.text.trim(),
+        'cityIndex': _ukrIndexCtrl.text.trim(),
+        'cityRef': _selectedCityRef ?? '',
+        'warehouseIndex': _selectedWarehouseIndex ?? '',
+        'postType': _warehouseCategory,
+      }, SetOptions(merge: true));
+      if (mounted)
+        setState(() {
+          _saving = false;
+          _editing = false;
+        });
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
@@ -656,16 +653,24 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
       }
     }
   }
+
   // -- Delivery Handlers --
   Future<void> _onCitySearch(String query) async {
     if (query.length < 2) {
-      setState(() { _citySuggestions = []; _loadingCities = false; });
+      setState(() {
+        _citySuggestions = [];
+        _loadingCities = false;
+      });
       return;
     }
     setState(() => _loadingCities = true);
     try {
       final results = await NovaPoshtaService.searchSettlements(query);
-      if (mounted) setState(() { _citySuggestions = results; _loadingCities = false; });
+      if (mounted)
+        setState(() {
+          _citySuggestions = results;
+          _loadingCities = false;
+        });
     } catch (_) {
       if (mounted) setState(() => _loadingCities = false);
     }
@@ -674,10 +679,18 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
   void _onCitySelected(dynamic city) async {
     final name = city['MainDescription'] ?? city['Description'] ?? '';
     _novaCityCtrl.text = name;
-    setState(() { _citySuggestions = []; _loadingCities = false; _novaWarehouseCtrl.clear(); _selectedWarehouseIndex = null; });
+    setState(() {
+      _citySuggestions = [];
+      _loadingCities = false;
+      _novaWarehouseCtrl.clear();
+      _selectedWarehouseIndex = null;
+    });
     String? ref = city['DeliveryCity'];
     if (ref == null || ref.isEmpty) {
-      ref = await NovaPoshtaService.resolveCityRef(name, city['AreaDescription'] ?? '');
+      ref = await NovaPoshtaService.resolveCityRef(
+        name,
+        city['AreaDescription'] ?? '',
+      );
     }
     setState(() => _selectedCityRef = ref);
     if (ref != null) _fetchWarehouses('', ref);
@@ -686,9 +699,19 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
   Future<void> _fetchWarehouses(String query, String cityRef) async {
     setState(() => _loadingWarehouses = true);
     try {
-      final results = await NovaPoshtaService.getWarehouses(cityRef, findByString: query, category: _warehouseCategory);
-      if (mounted) setState(() { _warehouseSuggestions = results; _loadingWarehouses = false; });
-    } catch (_) { if (mounted) setState(() => _loadingWarehouses = false); }
+      final results = await NovaPoshtaService.getWarehouses(
+        cityRef,
+        findByString: query,
+        category: _warehouseCategory,
+      );
+      if (mounted)
+        setState(() {
+          _warehouseSuggestions = results;
+          _loadingWarehouses = false;
+        });
+    } catch (_) {
+      if (mounted) setState(() => _loadingWarehouses = false);
+    }
   }
 
   void _onWarehouseSelected(dynamic warehouse) {
@@ -698,6 +721,7 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
       _warehouseSuggestions = [];
     });
   }
+
   @override
   void dispose() {
     _firstNameCtrl.dispose();
@@ -708,14 +732,14 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark    = Theme.of(context).brightness == Brightness.dark;
-    final panelBg   = isDark ? const Color(0xFF1E1A17) : const Color(0xFFF0EAE2);
-    final cardBg    = isDark ? const Color(0xFF2A2420) : Colors.white;
-    final titleCol  = isDark ? Colors.white : const Color(0xFF2B2118);
-    final subCol    = isDark ? Colors.white70 : const Color(0xFF5A5047);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final panelBg = isDark ? const Color(0xFF1E1A17) : const Color(0xFFF0EAE2);
+    final cardBg = isDark ? const Color(0xFF2A2420) : Colors.white;
+    final titleCol = isDark ? Colors.white : const Color(0xFF2B2118);
+    final subCol = isDark ? Colors.white70 : const Color(0xFF5A5047);
     final borderCol = isDark ? Colors.white12 : const Color(0xFFDDD6CC);
-    const green     = Color(0xFF8CAF7B);
-    final topPad    = MediaQuery.of(context).padding.top + 16;
+    const green = Color(0xFF8CAF7B);
+    final topPad = MediaQuery.of(context).padding.top + 16;
     final bottomPad = MediaQuery.of(context).padding.bottom + 20;
 
     final fullName = [
@@ -749,7 +773,6 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
             ),
             child: Column(
               children: [
-
                 // ── Header ─────────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 20, 8, 8),
@@ -758,23 +781,30 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Container(
-                          width: 36, height: 36,
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
                             color: cardBg,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: borderCol, width: 1.2),
                           ),
-                          child: Icon(Icons.arrow_back_ios_new_rounded,
-                              size: 16, color: titleCol),
+                          child: Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 16,
+                            color: titleCol,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
-                        child: Text(_tab == _ProfileTab.info ? 'Профіль' : 'Замовлення',
+                        child: Text(
+                          _tab == _ProfileTab.info ? 'Профіль' : 'Замовлення',
                           style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
                             color: titleCol,
-                          )),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -782,36 +812,40 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
 
                 // ── Tab Switcher ──────────────────────────────────────
                 if (!_editing)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: Container(
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _TabButton(
-                            label: 'Дані',
-                            active: _tab == _ProfileTab.info,
-                            onTap: () => setState(() => _tab = _ProfileTab.info),
-                            isDark: isDark,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                    child: Container(
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _TabButton(
+                              label: 'Дані',
+                              active: _tab == _ProfileTab.info,
+                              onTap: () =>
+                                  setState(() => _tab = _ProfileTab.info),
+                              isDark: isDark,
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: _TabButton(
-                            label: 'Замовлення',
-                            active: _tab == _ProfileTab.orders,
-                            onTap: () => setState(() => _tab = _ProfileTab.orders),
-                            isDark: isDark,
+                          Expanded(
+                            child: _TabButton(
+                              label: 'Замовлення',
+                              active: _tab == _ProfileTab.orders,
+                              onTap: () =>
+                                  setState(() => _tab = _ProfileTab.orders),
+                              isDark: isDark,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
                 // ── Body ───────────────────────────────────────────────
                 Expanded(
@@ -820,7 +854,8 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                           child: CircularProgressIndicator(
                             valueColor: AlwaysStoppedAnimation(green),
                             strokeWidth: 2.5,
-                          ))
+                          ),
+                        )
                       : AnimatedSwitcher(
                           duration: const Duration(milliseconds: 280),
                           switchInCurve: Curves.easeOut,
@@ -829,27 +864,40 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                               // ── EDIT MODE: individual input fields ────────
                               ? SingleChildScrollView(
                                   key: const ValueKey('edit'),
-                                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    12,
+                                    16,
+                                    8,
+                                  ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       Padding(
-                                        padding: const EdgeInsets.only(left: 4, bottom: 10),
-                                        child: Text('РЕДАГУВАННЯ ПРОФІЛЮ',
+                                        padding: const EdgeInsets.only(
+                                          left: 4,
+                                          bottom: 10,
+                                        ),
+                                        child: Text(
+                                          'РЕДАГУВАННЯ ПРОФІЛЮ',
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w800,
                                             color: subCol,
                                             letterSpacing: 1.2,
-                                          )),
+                                          ),
+                                        ),
                                       ),
                                       _ProfileField(
                                         controller: _firstNameCtrl,
                                         label: "Ім'я",
                                         icon: Icons.person_outline_rounded,
                                         editing: true,
-                                        isDark: isDark, cardBg: cardBg,
-                                        titleCol: titleCol, subCol: subCol,
+                                        isDark: isDark,
+                                        cardBg: cardBg,
+                                        titleCol: titleCol,
+                                        subCol: subCol,
                                         borderCol: borderCol,
                                         inputFormatters: [_CyrillicNameFmt()],
                                       ),
@@ -859,322 +907,477 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                                         label: 'Прізвище',
                                         icon: Icons.badge_outlined,
                                         editing: true,
-                                        isDark: isDark, cardBg: cardBg,
-                                        titleCol: titleCol, subCol: subCol,
+                                        isDark: isDark,
+                                        cardBg: cardBg,
+                                        titleCol: titleCol,
+                                        subCol: subCol,
                                         borderCol: borderCol,
                                         inputFormatters: [_CyrillicNameFmt()],
                                       ),
                                       const SizedBox(height: 10),
-                                        const SizedBox(height: 10),
-                                        _ProfileField(
-                                          controller: _phoneCtrl,
-                                          label: 'Телефон',
-                                          icon: Icons.phone_outlined,
-                                          editing: true,
-                                          isDark: isDark, cardBg: cardBg,
-                                          titleCol: titleCol, subCol: subCol,
-                                          borderCol: borderCol,
-                                          keyboardType: TextInputType.phone,
-                                          inputFormatters: [_UkrPhoneFmt()],
+                                      const SizedBox(height: 10),
+                                      _ProfileField(
+                                        controller: _phoneCtrl,
+                                        label: 'Телефон',
+                                        icon: Icons.phone_outlined,
+                                        editing: true,
+                                        isDark: isDark,
+                                        cardBg: cardBg,
+                                        titleCol: titleCol,
+                                        subCol: subCol,
+                                        borderCol: borderCol,
+                                        keyboardType: TextInputType.phone,
+                                        inputFormatters: [_UkrPhoneFmt()],
+                                      ),
+                                      const SizedBox(height: 24),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 4,
+                                          bottom: 10,
                                         ),
-                                        const SizedBox(height: 24),
-                                        Padding(
-                                          padding: const EdgeInsets.only(left: 4, bottom: 10),
-                                          child: Text('ДОСТАВКА ЗА ЗАМОВЧУВАННЯМ',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w800,
-                                              color: subCol,
-                                              letterSpacing: 1.2,
-                                            )),
+                                        child: Text(
+                                          'ДОСТАВКА ЗА ЗАМОВЧУВАННЯМ',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            color: subCol,
+                                            letterSpacing: 1.2,
+                                          ),
                                         ),
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: DeliveryChip(
-                                                label: 'Нова Пошта',
-                                                icon: Icons.local_shipping_outlined,
-                                                selected: _deliveryOption == 'novaPoshta',
-                                                isDark: isDark, cardBg: cardBg,
-                                                titleCol: titleCol, borderCol: borderCol,
-                                                onTap: () => setState(() => _deliveryOption = 'novaPoshta'),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: DeliveryChip(
+                                              label: 'Нова Пошта',
+                                              icon:
+                                                  Icons.local_shipping_outlined,
+                                              selected:
+                                                  _deliveryOption ==
+                                                  'novaPoshta',
+                                              isDark: isDark,
+                                              cardBg: cardBg,
+                                              titleCol: titleCol,
+                                              borderCol: borderCol,
+                                              onTap: () => setState(
+                                                () => _deliveryOption =
+                                                    'novaPoshta',
                                               ),
                                             ),
-                                            const SizedBox(width: 12),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: DeliveryChip(
+                                              label: 'Укрпошта',
+                                              icon: Icons.mail_outline_rounded,
+                                              selected:
+                                                  _deliveryOption ==
+                                                  'ukrPoshta',
+                                              isDark: isDark,
+                                              cardBg: cardBg,
+                                              titleCol: titleCol,
+                                              borderCol: borderCol,
+                                              onTap: () => setState(
+                                                () => _deliveryOption =
+                                                    'ukrPoshta',
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      if (_deliveryOption == 'novaPoshta')
+                                        NovaFields(
+                                          cityCtrl: _novaCityCtrl,
+                                          warehouseCtrl: _novaWarehouseCtrl,
+                                          isDark: isDark,
+                                          cardBg: cardBg,
+                                          titleCol: titleCol,
+                                          subCol: subCol,
+                                          borderCol: borderCol,
+                                          cityFocus: _cityFocus,
+                                          warehouseFocus: _warehouseFocus,
+                                          citySuggestions: _citySuggestions,
+                                          warehouseSuggestions:
+                                              _warehouseSuggestions,
+                                          loadingCities: _loadingCities,
+                                          loadingWarehouses: _loadingWarehouses,
+                                          onCitySearch: _onCitySearch,
+                                          onCitySelect: _onCitySelected,
+                                          onWarehouseSearch: (v) =>
+                                              _fetchWarehouses(
+                                                v,
+                                                _selectedCityRef ?? '',
+                                              ),
+                                          onWarehouseSelect:
+                                              _onWarehouseSelected,
+                                          category: _warehouseCategory,
+                                          onCategoryChange: (c) => setState(
+                                            () => _warehouseCategory = c,
+                                          ),
+                                        )
+                                      else
+                                        UkrFields(
+                                          cityCtrl: _ukrCityCtrl,
+                                          indexCtrl: _ukrIndexCtrl,
+                                          isDark: isDark,
+                                          cardBg: cardBg,
+                                          titleCol: titleCol,
+                                          subCol: subCol,
+                                          borderCol: borderCol,
+                                        ),
+                                    ],
+                                  ),
+                                )
+                              // ── VIEW MODE ─────────────────────────────────
+                              : _tab == _ProfileTab.info
+                              ? SingleChildScrollView(
+                                  key: const ValueKey('view_info'),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    0,
+                                    16,
+                                    8,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      // Avatar + name header card
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 20,
+                                          vertical: 18,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: cardBg,
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: borderCol,
+                                            width: 1.2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: isDark ? 0.25 : 0.06,
+                                              ),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 56,
+                                              height: 56,
+                                              decoration: BoxDecoration(
+                                                color: green.withValues(
+                                                  alpha: 0.12,
+                                                ),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: green.withValues(
+                                                    alpha: 0.35,
+                                                  ),
+                                                  width: 2,
+                                                ),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  initial,
+                                                  style: const TextStyle(
+                                                    fontSize: 24,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: green,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
                                             Expanded(
-                                              child: DeliveryChip(
-                                                label: 'Укрпошта',
-                                                icon: Icons.mail_outline_rounded,
-                                                selected: _deliveryOption == 'ukrPoshta',
-                                                isDark: isDark, cardBg: cardBg,
-                                                titleCol: titleCol, borderCol: borderCol,
-                                                onTap: () => setState(() => _deliveryOption = 'ukrPoshta'),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    fullName.isNotEmpty
+                                                        ? fullName
+                                                        : 'Користувач',
+                                                    style: TextStyle(
+                                                      fontSize: 17,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: titleCol,
+                                                    ),
+                                                  ),
+                                                  if (widget.auth.user?.email !=
+                                                      null)
+                                                    Text(
+                                                      widget.auth.user!.email!,
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: subCol,
+                                                      ),
+                                                    ),
+                                                ],
                                               ),
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 16),
-                                        if (_deliveryOption == 'novaPoshta')
-                                          NovaFields(
-                                            cityCtrl: _novaCityCtrl,
-                                            warehouseCtrl: _novaWarehouseCtrl,
-                                            isDark: isDark, cardBg: cardBg,
-                                            titleCol: titleCol, subCol: subCol, borderCol: borderCol,
-                                            cityFocus: _cityFocus, warehouseFocus: _warehouseFocus,
-                                            citySuggestions: _citySuggestions, warehouseSuggestions: _warehouseSuggestions,
-                                            loadingCities: _loadingCities, loadingWarehouses: _loadingWarehouses,
-                                            onCitySearch: _onCitySearch, onCitySelect: _onCitySelected,
-                                            onWarehouseSearch: (v) => _fetchWarehouses(v, _selectedCityRef ?? ''),
-                                            onWarehouseSelect: _onWarehouseSelected,
-                                            category: _warehouseCategory,
-                                            onCategoryChange: (c) => setState(() => _warehouseCategory = c),
-                                          )
-                                        else
-                                          UkrFields(
-                                            cityCtrl: _ukrCityCtrl,
-                                            indexCtrl: _ukrIndexCtrl,
-                                            isDark: isDark, cardBg: cardBg,
-                                            titleCol: titleCol, subCol: subCol, borderCol: borderCol,
+                                      ),
+                                      const SizedBox(height: 16),
+
+                                      // Contact info card
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: cardBg,
+                                          borderRadius: BorderRadius.circular(
+                                            20,
                                           ),
-                                      ],
-                                    ),
-                                  )
-                              // ── VIEW MODE ─────────────────────────────────
-                              : _tab == _ProfileTab.info 
-                               ? SingleChildScrollView(
-                                   key: const ValueKey('view_info'),
-                                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                                   child: Column(
-                                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                                     children: [
-                                       // Avatar + name header card
-                                       Container(
-                                         padding: const EdgeInsets.symmetric(
-                                             horizontal: 20, vertical: 18),
-                                         decoration: BoxDecoration(
-                                           color: cardBg,
-                                           borderRadius: BorderRadius.circular(20),
-                                           border: Border.all(color: borderCol, width: 1.2),
-                                           boxShadow: [
-                                             BoxShadow(
-                                               color: Colors.black.withValues(
-                                                   alpha: isDark ? 0.25 : 0.06),
-                                               blurRadius: 10,
-                                               offset: const Offset(0, 3),
-                                             ),
-                                           ],
-                                         ),
-                                         child: Row(
-                                           children: [
-                                             Container(
-                                               width: 56, height: 56,
-                                               decoration: BoxDecoration(
-                                                 color: green.withValues(alpha: 0.12),
-                                                 shape: BoxShape.circle,
-                                                 border: Border.all(
-                                                     color: green.withValues(alpha: 0.35),
-                                                     width: 2),
-                                               ),
-                                               child: Center(
-                                                 child: Text(initial,
-                                                   style: const TextStyle(
-                                                     fontSize: 24,
-                                                     fontWeight: FontWeight.w800,
-                                                     color: green,
-                                                   )),
-                                               ),
-                                             ),
-                                             const SizedBox(width: 16),
-                                             Expanded(
-                                               child: Column(
-                                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                                 children: [
-                                                   Text(
-                                                     fullName.isNotEmpty
-                                                         ? fullName
-                                                         : 'Користувач',
-                                                     style: TextStyle(
-                                                       fontSize: 17,
-                                                       fontWeight: FontWeight.w800,
-                                                       color: titleCol,
-                                                     )),
-                                                   if (widget.auth.user?.email != null)
-                                                       Text(
-                                                         widget.auth.user!.email!,
-                                                         style: TextStyle(
-                                                           fontSize: 12,
-                                                           color: subCol,
-                                                         ),
-                                                       ),
-                                                 ],
-                                               ),
-                                             ),
-                                           ],
-                                         ),
-                                       ),
-                                       const SizedBox(height: 16),
+                                          border: Border.all(
+                                            color: borderCol,
+                                            width: 1.2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: isDark ? 0.25 : 0.06,
+                                              ),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            _InfoRow(
+                                              icon:
+                                                  Icons.person_outline_rounded,
+                                              label: "Ім'я",
+                                              value:
+                                                  _firstNameCtrl.text
+                                                      .trim()
+                                                      .isNotEmpty
+                                                  ? _firstNameCtrl.text.trim()
+                                                  : '—',
+                                              titleCol: titleCol,
+                                              subCol: subCol,
+                                              borderCol: borderCol,
+                                              showDivider: true,
+                                            ),
+                                            _InfoRow(
+                                              icon: Icons.badge_outlined,
+                                              label: 'Прізвище',
+                                              value:
+                                                  _secondNameCtrl.text
+                                                      .trim()
+                                                      .isNotEmpty
+                                                  ? _secondNameCtrl.text.trim()
+                                                  : '—',
+                                              titleCol: titleCol,
+                                              subCol: subCol,
+                                              borderCol: borderCol,
+                                              showDivider: true,
+                                            ),
+                                            _InfoRow(
+                                              icon: Icons.phone_outlined,
+                                              label: 'Телефон',
+                                              value:
+                                                  _phoneCtrl.text
+                                                      .trim()
+                                                      .isNotEmpty
+                                                  ? _phoneCtrl.text.trim()
+                                                  : '—',
+                                              titleCol: titleCol,
+                                              subCol: subCol,
+                                              borderCol: borderCol,
+                                              showDivider: false,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
 
-                                       // Contact info card
-                                       Container(
-                                         decoration: BoxDecoration(
-                                           color: cardBg,
-                                           borderRadius: BorderRadius.circular(20),
-                                           border: Border.all(color: borderCol, width: 1.2),
-                                           boxShadow: [
-                                             BoxShadow(
-                                               color: Colors.black.withValues(
-                                                   alpha: isDark ? 0.25 : 0.06),
-                                               blurRadius: 10,
-                                               offset: const Offset(0, 3),
-                                             ),
-                                           ],
-                                         ),
-                                         child: Column(
-                                           children: [
-                                             _InfoRow(
-                                               icon: Icons.person_outline_rounded,
-                                               label: "Ім'я",
-                                               value: _firstNameCtrl.text.trim().isNotEmpty
-                                                   ? _firstNameCtrl.text.trim()
-                                                   : '—',
-                                               titleCol: titleCol,
-                                               subCol: subCol,
-                                               borderCol: borderCol,
-                                               showDivider: true,
-                                             ),
-                                             _InfoRow(
-                                               icon: Icons.badge_outlined,
-                                               label: 'Прізвище',
-                                               value: _secondNameCtrl.text.trim().isNotEmpty
-                                                   ? _secondNameCtrl.text.trim()
-                                                   : '—',
-                                               titleCol: titleCol,
-                                               subCol: subCol,
-                                               borderCol: borderCol,
-                                               showDivider: true,
-                                             ),
-                                             _InfoRow(
-                                               icon: Icons.phone_outlined,
-                                               label: 'Телефон',
-                                               value: _phoneCtrl.text.trim().isNotEmpty
-                                                   ? _phoneCtrl.text.trim()
-                                                   : '—',
-                                               titleCol: titleCol,
-                                               subCol: subCol,
-                                               borderCol: borderCol,
-                                               showDivider: false,
-                                             ),
-                                           ],
-                                         ),
-                                       ),
-                                       const SizedBox(height: 16),
-                                       
-                                       // Delivery info card
-                                       Container(
-                                         padding: const EdgeInsets.symmetric(vertical: 4),
-                                         decoration: BoxDecoration(
-                                           color: cardBg,
-                                           borderRadius: BorderRadius.circular(20),
-                                           border: Border.all(color: borderCol, width: 1.2),
-                                           boxShadow: [
-                                             BoxShadow(
-                                               color: Colors.black.withValues(
-                                                   alpha: isDark ? 0.25 : 0.06),
-                                               blurRadius: 10,
-                                               offset: const Offset(0, 3),
-                                             ),
-                                           ],
-                                         ),
-                                         child: Column(
-                                           children: [
-                                             _InfoRow(
-                                               icon: _deliveryOption == 'novaPoshta' 
-                                                  ? Icons.local_shipping_outlined 
+                                      // Delivery info card
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: cardBg,
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: borderCol,
+                                            width: 1.2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: isDark ? 0.25 : 0.06,
+                                              ),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            _InfoRow(
+                                              icon:
+                                                  _deliveryOption ==
+                                                      'novaPoshta'
+                                                  ? Icons
+                                                        .local_shipping_outlined
                                                   : Icons.mail_outline_rounded,
-                                               label: 'Доставка',
-                                               value: _deliveryOption == 'novaPoshta' ? 'Нова Пошта' : 'Укрпошта',
-                                               titleCol: titleCol, subCol: subCol, borderCol: borderCol,
-                                               showDivider: true,
-                                             ),
-                                             if (_deliveryOption == 'novaPoshta') ...[
-                                               _InfoRow(
-                                                 icon: Icons.location_city_outlined,
-                                                 label: 'Місто',
-                                                 value: _novaCityCtrl.text.isNotEmpty ? _novaCityCtrl.text : '—',
-                                                 titleCol: titleCol, subCol: subCol, borderCol: borderCol,
-                                                 showDivider: true,
-                                               ),
-                                               _InfoRow(
-                                                 icon: Icons.store_mall_directory_outlined,
-                                                 label: 'Відділення',
-                                                 value: _novaWarehouseCtrl.text.isNotEmpty ? _novaWarehouseCtrl.text : '—',
-                                                 titleCol: titleCol, subCol: subCol, borderCol: borderCol,
-                                                 showDivider: false,
-                                               ),
-                                             ] else ...[
-                                               _InfoRow(
-                                                 icon: Icons.location_on_outlined,
-                                                 label: 'Місто',
-                                                 value: _ukrCityCtrl.text.isNotEmpty ? _ukrCityCtrl.text : '—',
-                                                 titleCol: titleCol, subCol: subCol, borderCol: borderCol,
-                                                 showDivider: true,
-                                               ),
-                                               _InfoRow(
-                                                 icon: Icons.local_post_office_outlined,
-                                                 label: 'Індекс',
-                                                 value: _ukrIndexCtrl.text.isNotEmpty ? _ukrIndexCtrl.text : '—',
-                                                 titleCol: titleCol, subCol: subCol, borderCol: borderCol,
-                                                 showDivider: false,
-                                               ),
-                                             ],
-                                           ],
-                                         ),
-                                       ),
-                                     ],
-                                   ),
-                                 )
-                               : StreamBuilder<List<Map<String, dynamic>>>(
-                                   stream: _ordersStream(),
-                                   builder: (context, snapshot) {
-                                     if (snapshot.connectionState == ConnectionState.waiting) {
-                                       return const Center(child: CircularProgressIndicator(strokeWidth: 2, color: green));
-                                     }
-                                     
-                                     final ords = snapshot.data ?? [];
-                                     
-                                     if (ords.isEmpty) {
-                                       return Center(
-                                         child: Column(
-                                           mainAxisSize: MainAxisSize.min,
-                                           children: [
-                                             Icon(Icons.inventory_2_outlined, size: 48, color: subCol.withValues(alpha: 0.5)),
-                                             const SizedBox(height: 12),
-                                             Text('Замовлень поки немає', style: TextStyle(color: subCol, fontWeight: FontWeight.w600)),
-                                           ],
-                                         ),
-                                       );
-                                     }
+                                              label: 'Доставка',
+                                              value:
+                                                  _deliveryOption ==
+                                                      'novaPoshta'
+                                                  ? 'Нова Пошта'
+                                                  : 'Укрпошта',
+                                              titleCol: titleCol,
+                                              subCol: subCol,
+                                              borderCol: borderCol,
+                                              showDivider: true,
+                                            ),
+                                            if (_deliveryOption ==
+                                                'novaPoshta') ...[
+                                              _InfoRow(
+                                                icon: Icons
+                                                    .location_city_outlined,
+                                                label: 'Місто',
+                                                value:
+                                                    _novaCityCtrl
+                                                        .text
+                                                        .isNotEmpty
+                                                    ? _novaCityCtrl.text
+                                                    : '—',
+                                                titleCol: titleCol,
+                                                subCol: subCol,
+                                                borderCol: borderCol,
+                                                showDivider: true,
+                                              ),
+                                              _InfoRow(
+                                                icon: Icons
+                                                    .store_mall_directory_outlined,
+                                                label: 'Відділення',
+                                                value:
+                                                    _novaWarehouseCtrl
+                                                        .text
+                                                        .isNotEmpty
+                                                    ? _novaWarehouseCtrl.text
+                                                    : '—',
+                                                titleCol: titleCol,
+                                                subCol: subCol,
+                                                borderCol: borderCol,
+                                                showDivider: false,
+                                              ),
+                                            ] else ...[
+                                              _InfoRow(
+                                                icon:
+                                                    Icons.location_on_outlined,
+                                                label: 'Місто',
+                                                value:
+                                                    _ukrCityCtrl.text.isNotEmpty
+                                                    ? _ukrCityCtrl.text
+                                                    : '—',
+                                                titleCol: titleCol,
+                                                subCol: subCol,
+                                                borderCol: borderCol,
+                                                showDivider: true,
+                                              ),
+                                              _InfoRow(
+                                                icon: Icons
+                                                    .local_post_office_outlined,
+                                                label: 'Індекс',
+                                                value:
+                                                    _ukrIndexCtrl
+                                                        .text
+                                                        .isNotEmpty
+                                                    ? _ukrIndexCtrl.text
+                                                    : '—',
+                                                titleCol: titleCol,
+                                                subCol: subCol,
+                                                borderCol: borderCol,
+                                                showDivider: false,
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : StreamBuilder<List<Map<String, dynamic>>>(
+                                  stream: _ordersStream(),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: green,
+                                        ),
+                                      );
+                                    }
 
-                                     return ListView.separated(
-                                       key: const ValueKey('view_orders'),
-                                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                                       itemCount: ords.length,
-                                       separatorBuilder: (_, __) => const SizedBox(height: 10),
-                                       itemBuilder: (_, i) => _OrderCard(
-                                         order: ords[i],
-                                         isDark: isDark,
-                                         cardBg: cardBg,
-                                         titleCol: titleCol,
-                                         subCol: subCol,
-                                         borderCol: borderCol,
-                                         userPhone: _phoneCtrl.text.trim(),
-                                       ),
-                                     );
-                                   },
-                                 ),
-                        ),  // AnimatedSwitcher
-                ),  // Expanded (body)
+                                    final ords = snapshot.data ?? [];
 
+                                    if (ords.isEmpty) {
+                                      return Center(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.inventory_2_outlined,
+                                              size: 48,
+                                              color: subCol.withValues(
+                                                alpha: 0.5,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Text(
+                                              'Замовлень поки немає',
+                                              style: TextStyle(
+                                                color: subCol,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }
+
+                                    return ListView.separated(
+                                      key: const ValueKey('view_orders'),
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        0,
+                                        16,
+                                        80,
+                                      ),
+                                      itemCount: ords.length,
+                                      separatorBuilder: (_, __) =>
+                                          const SizedBox(height: 10),
+                                      itemBuilder: (_, i) => _OrderCard(
+                                        order: ords[i],
+                                        isDark: isDark,
+                                        cardBg: cardBg,
+                                        titleCol: titleCol,
+                                        subCol: subCol,
+                                        borderCol: borderCol,
+                                        userPhone: _phoneCtrl.text.trim(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ), // AnimatedSwitcher
+                ), // Expanded (body)
                 // ── Footer ─────────────────────────────────────────────
                 AnimatedSize(
                   duration: const Duration(milliseconds: 250),
@@ -1196,7 +1399,9 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                                     height: 50,
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                          color: borderCol, width: 1.5),
+                                        color: borderCol,
+                                        width: 1.5,
+                                      ),
                                       borderRadius: BorderRadius.circular(25),
                                     ),
                                     child: Center(
@@ -1236,20 +1441,24 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                                     child: Center(
                                       child: _saving
                                           ? const SizedBox(
-                                              width: 22, height: 22,
+                                              width: 22,
+                                              height: 22,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2.5,
                                                 valueColor:
                                                     AlwaysStoppedAnimation(
-                                                        Colors.white),
-                                              ))
+                                                      Colors.white,
+                                                    ),
+                                              ),
+                                            )
                                           : const Text(
                                               'Зберегти',
                                               style: TextStyle(
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.w700,
                                                 color: Colors.white,
-                                              )),
+                                              ),
+                                            ),
                                     ),
                                   ),
                                 ),
@@ -1257,14 +1466,13 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                             ],
                           )
                         // ── VIEW MODE: Edit (green) + Logout (danger text) ─
-                        : _tab == _ProfileTab.info 
+                        : _tab == _ProfileTab.info
                         ? Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               // Edit button — full width, green
                               GestureDetector(
-                                onTap: () =>
-                                    setState(() => _editing = true),
+                                onTap: () => setState(() => _editing = true),
                                 child: Container(
                                   height: 50,
                                   decoration: BoxDecoration(
@@ -1281,8 +1489,11 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                                   child: const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.edit_outlined,
-                                          size: 18, color: Colors.white),
+                                      Icon(
+                                        Icons.edit_outlined,
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
                                       SizedBox(width: 8),
                                       Text(
                                         'Редагувати',
@@ -1303,9 +1514,11 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                                   widget.auth.signOut();
                                   Navigator.pop(context);
                                 },
-                                icon: Icon(Icons.logout_rounded,
-                                    size: 16,
-                                    color: Colors.red[400]),
+                                icon: Icon(
+                                  Icons.logout_rounded,
+                                  size: 16,
+                                  color: Colors.red[400],
+                                ),
                                 label: Text(
                                   'Вийти з акаунту',
                                   style: TextStyle(
@@ -1315,8 +1528,9 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                                   ),
                                 ),
                                 style: TextButton.styleFrom(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
                                 ),
                               ),
                             ],
@@ -1356,27 +1570,31 @@ class _TabButton extends StatelessWidget {
         duration: const Duration(milliseconds: 240),
         margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: active 
+          color: active
               ? (isDark ? const Color(0xFF2A2420) : Colors.white)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: active ? [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            )
-          ] : null,
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Center(
-          child: Text(label,
+          child: Text(
+            label,
             style: TextStyle(
               fontSize: 13,
               fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-              color: active 
+              color: active
                   ? (isDark ? Colors.white : const Color(0xFF2B2118))
                   : (isDark ? Colors.white60 : const Color(0xFF5A5047)),
-            )),
+            ),
+          ),
         ),
       ),
     );
@@ -1422,7 +1640,10 @@ class _OrderCardState extends State<_OrderCard> {
   Future<void> _fetchTracking() async {
     final trackingNum = widget.order['trackingNumber'] as String?;
     final phone = (widget.order['phone'] as String?) ?? widget.userPhone;
-    if (trackingNum == null || trackingNum.isEmpty || (phone == null || phone.isEmpty)) return;
+    if (trackingNum == null ||
+        trackingNum.isEmpty ||
+        (phone == null || phone.isEmpty))
+      return;
 
     // Normalize phone for NP (they usually expect 380...)
     // Our formatter already saves them as +38 (0XX) XXX XXXX or similar
@@ -1430,7 +1651,10 @@ class _OrderCardState extends State<_OrderCard> {
     final digits = phone.replaceAll(RegExp(r'\D'), '');
 
     setState(() => _loadingStatus = true);
-    final result = await NovaPoshtaService.getTrackingStatus(trackingNum, digits);
+    final result = await NovaPoshtaService.getTrackingStatus(
+      trackingNum,
+      digits,
+    );
     if (mounted && result != null) {
       setState(() {
         _trackingStatus = result['Status'];
@@ -1440,6 +1664,7 @@ class _OrderCardState extends State<_OrderCard> {
       setState(() => _loadingStatus = false);
     }
   }
+
   String _getPlural(int count) {
     int rem10 = count % 10;
     int rem100 = count % 100;
@@ -1455,22 +1680,25 @@ class _OrderCardState extends State<_OrderCard> {
   @override
   Widget build(BuildContext context) {
     final status = widget.order['orderStatus'] as String? ?? 'Processing';
-    final total  = (widget.order['total'] as num?)?.toDouble() ?? 0;
-    final time   = widget.order['time'] as String? ?? '';
-    final items  = widget.order['items'] as List? ?? [];
+    final total = (widget.order['total'] as num?)?.toDouble() ?? 0;
+    final time = widget.order['time'] as String? ?? '';
+    final items = widget.order['items'] as List? ?? [];
     final orderId = widget.order['orderId']?.toString() ?? '?';
 
     final paymentField = widget.order['payment']?.toString();
     final paymentStatus = widget.order['paymentStatus']?.toString();
-    
-    final delivery = widget.order['deliveryOption'] == 'novaPoshta' ? 'Нова Пошта' : 'Укрпошта';
+
+    final delivery = widget.order['deliveryOption'] == 'novaPoshta'
+        ? 'Нова Пошта'
+        : 'Укрпошта';
     final address = widget.order['city'] ?? '';
-    final warehouse = widget.order['warehouse'] ?? widget.order['cityIndex'] ?? '';
+    final warehouse =
+        widget.order['warehouse'] ?? widget.order['cityIndex'] ?? '';
 
     Color statusColor;
     String statusLabel;
     IconData statusIcon;
-    
+
     switch (status) {
       case 'Preparing':
         statusColor = const Color(0xFF5E97E5);
@@ -1535,43 +1763,75 @@ class _OrderCardState extends State<_OrderCard> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('№$orderId', style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w900, color: widget.titleCol, letterSpacing: 0.5
-                    )),
+                    Text(
+                      '№$orderId',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: widget.titleCol,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(time, style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w600, color: widget.subCol.withValues(alpha: 0.8)
-                    )),
-                  ]
+                    Text(
+                      time,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: widget.subCol.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
                 ),
-                _StatusPill(label: statusLabel, icon: statusIcon, color: statusColor),
-              ]
+                _StatusPill(
+                  label: statusLabel,
+                  icon: statusIcon,
+                  color: statusColor,
+                ),
+              ],
             ),
-            
+
             const SizedBox(height: 18),
-            
+
             // --- Collapsed Preview (Always visible) ---
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Thumbnails Stack
                 SizedBox(
-                  width: 80, height: 44,
+                  width: 80,
+                  height: 44,
                   child: Stack(
                     children: [
-                      for (int i = 0; i < (items.length > 3 ? 3 : items.length); i++)
+                      for (
+                        int i = 0;
+                        i < (items.length > 3 ? 3 : items.length);
+                        i++
+                      )
                         Positioned(
                           left: i * 20.0,
-                          child: _ItemThumb(imageUrl: items[i]['image'], subCol: widget.subCol, borderCol: widget.borderCol, size: 44),
+                          child: _ItemThumb(
+                            imageUrl: items[i]['image'],
+                            subCol: widget.subCol,
+                            borderCol: widget.borderCol,
+                            size: 44,
+                          ),
                         ),
                       if (items.length > 3)
                         Positioned(
                           left: 3 * 20.0,
                           top: 12,
-                          child: Text('+${items.length - 3}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: widget.titleCol)),
+                          child: Text(
+                            '+${items.length - 3}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: widget.titleCol,
+                            ),
+                          ),
                         ),
-                    ]
-                  )
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 8),
                 // Total and items count
@@ -1579,21 +1839,49 @@ class _OrderCardState extends State<_OrderCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${total.toStringAsFixed(0)} ₴', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: widget.titleCol)),
+                      Text(
+                        '${total.toStringAsFixed(0)} ₴',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: widget.titleCol,
+                        ),
+                      ),
                       const SizedBox(height: 2),
                       Row(
                         children: [
-                          Text(_getPlural(items.length), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: widget.subCol)),
+                          Text(
+                            _getPlural(items.length),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: widget.subCol,
+                            ),
+                          ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Icon(Icons.circle, size: 4, color: widget.subCol.withValues(alpha: 0.3)),
+                            child: Icon(
+                              Icons.circle,
+                              size: 4,
+                              color: widget.subCol.withValues(alpha: 0.3),
+                            ),
                           ),
-                          Text(paymentStatus == 'success' ? 'ОПЛАЧЕНО' : 'ПІСЛЯПЛАТА', 
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: paymentStatus == 'success' ? const Color(0xFF8CAF7B) : const Color(0xFFE5A15E))),
-                        ]
-                      )
-                    ]
-                  )
+                          Text(
+                            paymentStatus == 'success'
+                                ? 'ОПЛАЧЕНО'
+                                : 'ПІСЛЯПЛАТА',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: paymentStatus == 'success'
+                                  ? const Color(0xFF8CAF7B)
+                                  : const Color(0xFFE5A15E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
                 // Expand Icon
                 Container(
@@ -1602,9 +1890,15 @@ class _OrderCardState extends State<_OrderCard> {
                     color: widget.borderCol.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(_expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, size: 20, color: widget.titleCol.withValues(alpha: 0.6)),
-                )
-              ]
+                  child: Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: widget.titleCol.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
             ),
 
             // Detailed view (when expanded)
@@ -1619,20 +1913,24 @@ class _OrderCardState extends State<_OrderCard> {
                           const SizedBox(height: 16),
                           Divider(height: 1, color: widget.borderCol),
                           const SizedBox(height: 16),
-                          
+
                           // --- Products ---
                           _SectionTitle('ТОВАРИ', items.length.toString()),
                           const SizedBox(height: 8),
                           for (int i = 0; i < items.length; i++) ...[
                             _OrderItemRow(
-                              item: Map<String, dynamic>.from(items[i]), 
-                              titleCol: widget.titleCol, 
-                              subCol: widget.subCol
+                              item: Map<String, dynamic>.from(items[i]),
+                              titleCol: widget.titleCol,
+                              subCol: widget.subCol,
                             ),
-                            if (i < items.length - 1) 
-                              Divider(height: 1, color: widget.borderCol.withValues(alpha: 0.4), indent: 56),
+                            if (i < items.length - 1)
+                              Divider(
+                                height: 1,
+                                color: widget.borderCol.withValues(alpha: 0.4),
+                                indent: 56,
+                              ),
                           ],
-                          
+
                           // --- Shipping & Logistics ---
                           const SizedBox(height: 20),
                           _SectionTitle('ДОСТАВКА ТА ЛОГІСТИКА', null),
@@ -1640,9 +1938,13 @@ class _OrderCardState extends State<_OrderCard> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: widget.isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+                              color: widget.isDark
+                                  ? Colors.white.withValues(alpha: 0.03)
+                                  : Colors.black.withValues(alpha: 0.02),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: widget.borderCol.withValues(alpha: 0.3)),
+                              border: Border.all(
+                                color: widget.borderCol.withValues(alpha: 0.3),
+                              ),
                             ),
                             child: Column(
                               children: [
@@ -1651,21 +1953,41 @@ class _OrderCardState extends State<_OrderCard> {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF8CAF7B).withValues(alpha: 0.1),
+                                        color: const Color(
+                                          0xFF8CAF7B,
+                                        ).withValues(alpha: 0.1),
                                         shape: BoxShape.circle,
                                       ),
-                                      child: Icon(widget.order['deliveryOption'] == 'novaPoshta' 
-                                        ? Icons.local_shipping_outlined 
-                                        : Icons.mail_outline_rounded, 
-                                        size: 16, color: const Color(0xFF8CAF7B)),
+                                      child: Icon(
+                                        widget.order['deliveryOption'] ==
+                                                'novaPoshta'
+                                            ? Icons.local_shipping_outlined
+                                            : Icons.mail_outline_rounded,
+                                        size: 16,
+                                        color: const Color(0xFF8CAF7B),
+                                      ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Text(delivery, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: widget.titleCol)),
-                                          Text('$address, $warehouse', style: TextStyle(fontSize: 11, color: widget.subCol)),
+                                          Text(
+                                            delivery,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                              color: widget.titleCol,
+                                            ),
+                                          ),
+                                          Text(
+                                            '$address, $warehouse',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: widget.subCol,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -1678,29 +2000,62 @@ class _OrderCardState extends State<_OrderCard> {
                                   ),
                                   Row(
                                     children: [
-                                      Icon(Icons.qr_code_scanner_rounded, size: 16, color: statusColor),
+                                      Icon(
+                                        Icons.qr_code_scanner_rounded,
+                                        size: 16,
+                                        color: statusColor,
+                                      ),
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Row(
                                               children: [
-                                                Text('ТТН: ${widget.order['trackingNumber']}', 
-                                                  style: TextStyle(fontSize: 13, color: widget.titleCol, fontWeight: FontWeight.w800)),
+                                                Text(
+                                                  'ТТН: ${widget.order['trackingNumber']}',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: widget.titleCol,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ),
                                                 if (_loadingStatus)
-                                                   const Padding(
-                                                     padding: EdgeInsets.only(left: 8.0),
-                                                     child: SizedBox(width: 10, height: 10, child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF8CAF7B))),
-                                                   ),
+                                                  const Padding(
+                                                    padding: EdgeInsets.only(
+                                                      left: 8.0,
+                                                    ),
+                                                    child: SizedBox(
+                                                      width: 10,
+                                                      height: 10,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                            strokeWidth: 1.5,
+                                                            color: Color(
+                                                              0xFF8CAF7B,
+                                                            ),
+                                                          ),
+                                                    ),
+                                                  ),
                                               ],
                                             ),
                                             if (_trackingStatus != null)
                                               Padding(
-                                                padding: const EdgeInsets.only(top: 2),
-                                                child: Text(_trackingStatus!, 
-                                                  style: TextStyle(fontSize: 11, color: statusColor, fontWeight: FontWeight.w700),
-                                                  overflow: TextOverflow.ellipsis, maxLines: 1),
+                                                padding: const EdgeInsets.only(
+                                                  top: 2,
+                                                ),
+                                                child: Text(
+                                                  _trackingStatus!,
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: statusColor,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  maxLines: 1,
+                                                ),
                                               ),
                                           ],
                                         ),
@@ -1708,7 +2063,8 @@ class _OrderCardState extends State<_OrderCard> {
                                     ],
                                   ),
                                 ],
-                                if (widget.order['sentDate'] != null || widget.order['receivedDate'] != null) ...[
+                                if (widget.order['sentDate'] != null ||
+                                    widget.order['receivedDate'] != null) ...[
                                   const Padding(
                                     padding: EdgeInsets.symmetric(vertical: 8),
                                     child: Divider(height: 1),
@@ -1729,7 +2085,8 @@ class _OrderCardState extends State<_OrderCard> {
                                           child: _Milestone(
                                             icon: Icons.task_alt_rounded,
                                             label: 'Отримано',
-                                            date: '${widget.order['receivedDate']}',
+                                            date:
+                                                '${widget.order['receivedDate']}',
                                             subCol: widget.subCol,
                                           ),
                                         ),
@@ -1754,13 +2111,37 @@ class _OrderCardState extends State<_OrderCard> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('СУМА ДО ОПЛАТИ', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: widget.subCol, letterSpacing: 1)),
+                                    Text(
+                                      'СУМА ДО ОПЛАТИ',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                        color: widget.subCol,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
                                     const SizedBox(height: 2),
-                                    Text(paymentField == 'paylater' || paymentField == 'payLater' ? 'Оплата при отриманні' : 'Оплата онлайн', 
-                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: widget.subCol)),
+                                    Text(
+                                      paymentField == 'paylater' ||
+                                              paymentField == 'payLater'
+                                          ? 'Оплата при отриманні'
+                                          : 'Оплата онлайн',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: widget.subCol,
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                Text('${total.toStringAsFixed(0)} грн', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: widget.titleCol)),
+                                Text(
+                                  '${total.toStringAsFixed(0)} грн',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    color: widget.titleCol,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -1779,7 +2160,11 @@ class _OrderCardState extends State<_OrderCard> {
 // ── Shared Components for Order Card ─────────────────────────────────────────
 
 class _OrderItemRow extends StatelessWidget {
-  const _OrderItemRow({required this.item, required this.titleCol, required this.subCol});
+  const _OrderItemRow({
+    required this.item,
+    required this.titleCol,
+    required this.subCol,
+  });
   final Map<String, dynamic> item;
   final Color titleCol, subCol;
 
@@ -1792,8 +2177,13 @@ class _OrderItemRow extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: item['image'] != null
-                ? Image.network(item['image'], width: 44, height: 44, fit: BoxFit.cover, 
-                    errorBuilder: (_, __, ___) => _Placeholder(subCol))
+                ? Image.network(
+                    item['image'],
+                    width: 44,
+                    height: 44,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _Placeholder(subCol),
+                  )
                 : _Placeholder(subCol),
           ),
           const SizedBox(width: 12),
@@ -1801,12 +2191,21 @@ class _OrderItemRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item['name'] ?? '', 
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: titleCol), 
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  item['name'] ?? '',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: titleCol,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 2),
-                Text('${item['quantity']} × ${item['price']} грн', 
-                  style: TextStyle(fontSize: 12, color: subCol)),
+                Text(
+                  '${item['quantity']} × ${item['price']} грн',
+                  style: TextStyle(fontSize: 12, color: subCol),
+                ),
               ],
             ),
           ),
@@ -1817,12 +2216,19 @@ class _OrderItemRow extends StatelessWidget {
 }
 
 class _Placeholder extends StatelessWidget {
-  const _Placeholder(this.col); final Color col;
+  const _Placeholder(this.col);
+  final Color col;
   @override
   Widget build(BuildContext context) => Container(
-    width: 44, height: 44, 
-    color: col.withValues(alpha: 0.1), 
-    child: Icon(Icons.inventory_2_outlined, size: 20, color: col.withValues(alpha: 0.3)));
+    width: 44,
+    height: 44,
+    color: col.withValues(alpha: 0.1),
+    child: Icon(
+      Icons.inventory_2_outlined,
+      size: 20,
+      color: col.withValues(alpha: 0.3),
+    ),
+  );
 }
 
 // ── Profile field: read-only card ↔ editable input ───────────────────────────
@@ -1890,22 +2296,22 @@ class _ProfileField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
-            color: editing
-                ? const Color(0xFF8CAF7B)
-                : subCol,
+            color: editing ? const Color(0xFF8CAF7B) : subCol,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
-          prefixIcon: Icon(icon,
-              color: editing
-                  ? const Color(0xFF8CAF7B)
-                  : subCol,
-              size: 20),
+          prefixIcon: Icon(
+            icon,
+            color: editing ? const Color(0xFF8CAF7B) : subCol,
+            size: 20,
+          ),
           filled: false,
           border: InputBorder.none,
           disabledBorder: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );
@@ -1917,28 +2323,31 @@ class _ProfileField extends StatelessWidget {
 class _CyrillicNameFmt extends TextInputFormatter {
   static final _ok = RegExp(r'[\u0400-\u04FF\u0027\- ]');
   @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue o, TextEditingValue n) {
+  TextEditingValue formatEditUpdate(TextEditingValue o, TextEditingValue n) {
     final src = n.text;
     final buf = StringBuffer();
     int cur = n.selection.baseOffset.clamp(0, src.length);
     int rm = 0;
     for (int i = 0; i < src.length; i++) {
-      if (_ok.hasMatch(src[i])) { buf.write(src[i]); }
-      else { if (i < cur) rm++; }
+      if (_ok.hasMatch(src[i])) {
+        buf.write(src[i]);
+      } else {
+        if (i < cur) rm++;
+      }
     }
     String r = buf.toString();
     if (r.isNotEmpty) r = r[0].toUpperCase() + r.substring(1);
     final off = (cur - rm).clamp(0, r.length);
     return TextEditingValue(
-        text: r, selection: TextSelection.collapsed(offset: off));
+      text: r,
+      selection: TextSelection.collapsed(offset: off),
+    );
   }
 }
 
 class _UkrPhoneFmt extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue o, TextEditingValue n) {
+  TextEditingValue formatEditUpdate(TextEditingValue o, TextEditingValue n) {
     final raw = n.text;
     String local;
     if (raw.startsWith('+38') || raw.startsWith('380')) {
@@ -1953,11 +2362,13 @@ class _UkrPhoneFmt extends TextInputFormatter {
     final buf = StringBuffer('+38 ');
     if (local.isNotEmpty) {
       buf.write('(');
-      if (local.length <= 3) { buf.write(local); }
-      else {
+      if (local.length <= 3) {
+        buf.write(local);
+      } else {
         buf.write('${local.substring(0, 3)}) ');
-        if (local.length <= 6) { buf.write(local.substring(3)); }
-        else {
+        if (local.length <= 6) {
+          buf.write(local.substring(3));
+        } else {
           buf.write('${local.substring(3, 6)} ');
           buf.write(local.substring(6));
         }
@@ -1965,7 +2376,9 @@ class _UkrPhoneFmt extends TextInputFormatter {
     }
     final res = buf.toString();
     return TextEditingValue(
-        text: res, selection: TextSelection.collapsed(offset: res.length));
+      text: res,
+      selection: TextSelection.collapsed(offset: res.length),
+    );
   }
 }
 
@@ -2058,24 +2471,40 @@ class _Milestone extends StatelessWidget {
           children: [
             Icon(icon, size: 14, color: subCol),
             const SizedBox(width: 8),
-            Text(label.toUpperCase(), style: TextStyle(
-              fontSize: 9, fontWeight: FontWeight.w800, color: subCol, letterSpacing: 0.5
-            )),
+            Text(
+              label.toUpperCase(),
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                color: subCol,
+                letterSpacing: 0.5,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 2),
         Padding(
           padding: const EdgeInsets.only(left: 22),
-          child: Text(date, style: TextStyle(
-            fontSize: 11, fontWeight: FontWeight.w600, color: subCol.withValues(alpha: 0.8)
-          )),
+          child: Text(
+            date,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: subCol.withValues(alpha: 0.8),
+            ),
+          ),
         ),
       ],
     );
   }
 }
+
 class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label, required this.icon, required this.color});
+  const _StatusPill({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
   final String label;
   final IconData icon;
   final Color color;
@@ -2093,9 +2522,14 @@ class _StatusPill extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(
-            fontSize: 10, fontWeight: FontWeight.w800, color: color
-          )),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -2103,7 +2537,12 @@ class _StatusPill extends StatelessWidget {
 }
 
 class _ItemThumb extends StatelessWidget {
-  const _ItemThumb({this.imageUrl, required this.subCol, required this.borderCol, this.size = 32});
+  const _ItemThumb({
+    this.imageUrl,
+    required this.subCol,
+    required this.borderCol,
+    this.size = 32,
+  });
   final String? imageUrl;
   final Color subCol, borderCol;
   final double size;
@@ -2111,7 +2550,8 @@ class _ItemThumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: size, height: size,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(size * 0.25),
@@ -2119,15 +2559,20 @@ class _ItemThumb extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4, offset: const Offset(0, 1)
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(size * 0.25),
         child: imageUrl != null && imageUrl!.isNotEmpty
-          ? Image.network(imageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _Placeholder(subCol))
-          : _Placeholder(subCol),
+            ? Image.network(
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _Placeholder(subCol),
+              )
+            : _Placeholder(subCol),
       ),
     );
   }
@@ -2145,9 +2590,15 @@ class _SectionTitle extends StatelessWidget {
 
     return Row(
       children: [
-        Text(title, style: TextStyle(
-          fontSize: 10, fontWeight: FontWeight.w900, color: subCol, letterSpacing: 1.2
-        )),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: subCol,
+            letterSpacing: 1.2,
+          ),
+        ),
         if (badge != null) ...[
           const SizedBox(width: 8),
           Container(
@@ -2156,9 +2607,14 @@ class _SectionTitle extends StatelessWidget {
               color: subCol.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Text(badge!, style: TextStyle(
-              fontSize: 9, fontWeight: FontWeight.w900, color: subCol
-            )),
+            child: Text(
+              badge!,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                color: subCol,
+              ),
+            ),
           ),
         ],
       ],

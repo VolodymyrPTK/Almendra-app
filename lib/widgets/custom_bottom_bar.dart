@@ -59,9 +59,9 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
       _isCategoriesExpanded = !_isCategoriesExpanded;
       if (_isCategoriesExpanded) {
         _isSearchExpanded = false; // Close search if opening categories
-        _isFilterExpanded = false; 
+        _isFilterExpanded = false;
       } else {
-        _selectedCategory = null; 
+        _selectedCategory = null;
       }
     });
 
@@ -166,19 +166,15 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
               _buildSearchResults(isDark),
 
             if (_isSearchExpanded && (_searchResults.isNotEmpty || _isLoading))
-              const SizedBox(height: 6), 
-
-            if (_isCategoriesExpanded)
-              _buildCategoriesMenu(isDark),
-
-            if (_isCategoriesExpanded)
               const SizedBox(height: 6),
 
-            if (_isFilterExpanded)
-              _buildFilterMenu(isDark, context),
+            if (_isCategoriesExpanded) _buildCategoriesMenu(isDark),
 
-            if (_isFilterExpanded)
-              const SizedBox(height: 6),
+            if (_isCategoriesExpanded) const SizedBox(height: 6),
+
+            if (_isFilterExpanded) _buildFilterMenu(isDark, context),
+
+            if (_isFilterExpanded) const SizedBox(height: 6),
 
             // Bottom Bar Row
             Row(
@@ -205,13 +201,13 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                           height: 70,
                           decoration: BoxDecoration(
                             color: isDark
-                                ? Colors.white.withValues(alpha: 0.1)
-                                : Colors.white.withValues(alpha: 0.7),
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.white.withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(100),
                             border: Border.all(
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.2)
-                                  : Colors.white.withValues(alpha: 0.9),
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.white.withValues(alpha: 0.6),
                               width: 1.5,
                             ),
                           ),
@@ -266,7 +262,9 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
     };
 
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.6),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+      ),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.black.withValues(alpha: 0.6)
@@ -370,7 +368,10 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(100),
                                 child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 20,
+                                    sigmaY: 20,
+                                  ),
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 300),
                                     padding: const EdgeInsets.symmetric(
@@ -381,8 +382,12 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                                       gradient: isActive
                                           ? LinearGradient(
                                               colors: [
-                                                const Color(0xFF6DE8C3).withValues(alpha: 0.4),
-                                                const Color(0xFF8CAF7B).withValues(alpha: 0.4),
+                                                const Color(
+                                                  0xFF6DE8C3,
+                                                ).withValues(alpha: 0.4),
+                                                const Color(
+                                                  0xFF8CAF7B,
+                                                ).withValues(alpha: 0.4),
                                               ],
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
@@ -391,21 +396,33 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                                       color: isActive
                                           ? null
                                           : (isDark
-                                              ? Colors.white.withValues(alpha: 0.1)
-                                              : Colors.white.withValues(alpha: 0.7)),
+                                                ? Colors.white.withValues(
+                                                    alpha: 0.1,
+                                                  )
+                                                : Colors.white.withValues(
+                                                    alpha: 0.7,
+                                                  )),
                                       borderRadius: BorderRadius.circular(100),
                                       border: Border.all(
                                         color: isActive
-                                            ? const Color(0xFF6DE8C3).withValues(alpha: 0.6)
+                                            ? const Color(
+                                                0xFF6DE8C3,
+                                              ).withValues(alpha: 0.6)
                                             : (isDark
-                                                ? Colors.white.withValues(alpha: 0.2)
-                                                : Colors.white.withValues(alpha: 0.9)),
+                                                  ? Colors.white.withValues(
+                                                      alpha: 0.2,
+                                                    )
+                                                  : Colors.white.withValues(
+                                                      alpha: 0.9,
+                                                    )),
                                         width: 1.5,
                                       ),
                                       boxShadow: isActive
                                           ? [
                                               BoxShadow(
-                                                color: const Color(0xFF6DE8C3).withValues(alpha: 0.3),
+                                                color: const Color(
+                                                  0xFF6DE8C3,
+                                                ).withValues(alpha: 0.3),
                                                 blurRadius: 16,
                                                 spreadRadius: 2,
                                                 offset: const Offset(0, 4),
@@ -448,7 +465,9 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
     final fgColor = isDark ? Colors.white : Colors.black87;
 
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.6),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+      ),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.black.withValues(alpha: 0.6)
@@ -542,7 +561,12 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.only(top: 16, bottom: 12, left: 24, right: 16),
+            padding: const EdgeInsets.only(
+              top: 16,
+              bottom: 12,
+              left: 24,
+              right: 16,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -571,7 +595,7 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
               ],
             ),
           ),
-          
+
           Flexible(
             child: RawScrollbar(
               thumbVisibility: true,
@@ -581,7 +605,10 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
               mainAxisMargin: 12,
               crossAxisMargin: 6,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -592,7 +619,9 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                           _selectedCategory = null;
                           _isCategoriesExpanded = false;
                         });
-                        context.read<ProductsProvider>().setCategoryFilter(null);
+                        context.read<ProductsProvider>().setCategoryFilter(
+                          null,
+                        );
                       },
                       borderRadius: BorderRadius.circular(20),
                       child: buildGlassButton(
@@ -629,7 +658,10 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                               child: buildGlassButton(
                                 radius: 16,
                                 width: itemWidth,
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 14,
+                                ),
                                 child: Center(
                                   child: Text(
                                     cat,
@@ -668,7 +700,12 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.only(top: 16, bottom: 12, left: 16, right: 16),
+            padding: const EdgeInsets.only(
+              top: 16,
+              bottom: 12,
+              left: 16,
+              right: 16,
+            ),
             child: Row(
               children: [
                 InkWell(
@@ -682,7 +719,11 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                     radius: 12,
                     width: 36,
                     height: 36,
-                    child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: fgColor),
+                    child: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 16,
+                      color: fgColor,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -701,7 +742,7 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
               ],
             ),
           ),
-          
+
           Flexible(
             child: RawScrollbar(
               thumbVisibility: true,
@@ -711,7 +752,10 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
               mainAxisMargin: 12,
               crossAxisMargin: 6,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -724,9 +768,13 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                           _isCategoriesExpanded = false;
                         });
                         if (categoryProducts.isNotEmpty) {
-                          context.read<ProductsProvider>().setCategoryFilter(categoryProducts);
+                          context.read<ProductsProvider>().setCategoryFilter(
+                            categoryProducts,
+                          );
                         } else {
-                          context.read<ProductsProvider>().setCategoryFilter([currentCat]);
+                          context.read<ProductsProvider>().setCategoryFilter([
+                            currentCat,
+                          ]);
                         }
                       },
                       borderRadius: BorderRadius.circular(20),
@@ -760,13 +808,18 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                                   _selectedCategory = null;
                                   _isCategoriesExpanded = false;
                                 });
-                                context.read<ProductsProvider>().setCategoryFilter([sub]);
+                                context
+                                    .read<ProductsProvider>()
+                                    .setCategoryFilter([sub]);
                               },
                               borderRadius: BorderRadius.circular(16),
                               child: buildGlassButton(
                                 radius: 16,
                                 width: itemWidth,
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 14,
+                                ),
                                 child: Center(
                                   child: Text(
                                     sub,
@@ -817,15 +870,15 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
           // Determine the sliding direction based on the child's key.
           final offsetAnimation = Tween<Offset>(
             begin: child.key == const ValueKey('main_categories')
-                ? const Offset(-1.0, 0.0) // Moving back out, slide old one off to the left/new one in from left
+                ? const Offset(
+                    -1.0,
+                    0.0,
+                  ) // Moving back out, slide old one off to the left/new one in from left
                 : const Offset(1.0, 0.0), // Moving in, slide from the right
             end: Offset.zero,
           ).animate(animation);
 
-          return SlideTransition(
-            position: offsetAnimation,
-            child: child,
-          );
+          return SlideTransition(position: offsetAnimation, child: child);
         },
         child: child,
       ),
@@ -881,99 +934,101 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                     // The prompt asks to have the first result at the bottom
                     reverse: true,
                     itemCount: _displayedResults.length,
-                    separatorBuilder: (context, index) =>
-                        Divider(height: 1, color: fgColor.withValues(alpha: 0.1)),
+                    separatorBuilder: (context, index) => Divider(
+                      height: 1,
+                      color: fgColor.withValues(alpha: 0.1),
+                    ),
                     itemBuilder: (context, index) {
-                    final product = _displayedResults[index];
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 0,
-                      ),
-                      visualDensity: const VisualDensity(vertical: -2),
-                      leading: product.imageUrl != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: CachedNetworkImage(
-                                imageUrl: product.imageUrl!,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                                placeholder: (_, __) => Container(
+                      final product = _displayedResults[index];
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 0,
+                        ),
+                        visualDensity: const VisualDensity(vertical: -2),
+                        leading: product.imageUrl != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: CachedNetworkImage(
+                                  imageUrl: product.imageUrl!,
                                   width: 50,
                                   height: 50,
-                                  color: fgColor.withValues(alpha: 0.1),
+                                  fit: BoxFit.cover,
+                                  placeholder: (_, __) => Container(
+                                    width: 50,
+                                    height: 50,
+                                    color: fgColor.withValues(alpha: 0.1),
+                                  ),
+                                  errorWidget: (_, __, ___) => Icon(
+                                    Icons.fastfood_rounded,
+                                    size: 28,
+                                    color: fgColor.withValues(alpha: 0.3),
+                                  ),
                                 ),
-                                errorWidget: (_, __, ___) => Icon(
+                              )
+                            : Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: fgColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
                                   Icons.fastfood_rounded,
                                   size: 28,
                                   color: fgColor.withValues(alpha: 0.3),
                                 ),
                               ),
-                            )
-                          : Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: fgColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.fastfood_rounded,
-                                size: 28,
-                                color: fgColor.withValues(alpha: 0.3),
-                              ),
-                            ),
-                      title: Text(
-                        product.name,
-                        style: TextStyle(
-                          color: fgColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Row(
-                        children: [
-                          Text(
-                            '${product.sellPrice.toStringAsFixed(0)} ₴',
-                            style: TextStyle(
-                              color: fgColor.withValues(alpha: 0.6),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                            ),
+                        title: Text(
+                          product.name,
+                          style: TextStyle(
+                            color: fgColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
                           ),
-                          if (product.outOfStock) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Row(
+                          children: [
+                            Text(
+                              '${product.sellPrice.toStringAsFixed(0)} ₴',
+                              style: TextStyle(
+                                color: fgColor.withValues(alpha: 0.6),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
                               ),
-                              decoration: BoxDecoration(
-                                color: Colors.red.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'Немає в наявності',
-                                style: TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+                            ),
+                            if (product.outOfStock) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Немає в наявності',
+                                  style: TextStyle(
+                                    color: Colors.redAccent,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
-                      ),
-                      onTap: () {
-                        ProductDetailSheet.show(context, product);
-                      },
-                    );
-                  },
+                        ),
+                        onTap: () {
+                          ProductDetailSheet.show(context, product);
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
         ),
       ),
     );
@@ -1047,80 +1102,46 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
           }
         });
       },
-      child: SizedBox(
-        width: 90,
-        height: 90,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Glow orb
-            Container(
-              width: 90,
-              height: 90,
+      child: Container(
+        width: 70,
+        height: 70,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(100),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(100),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFF6DE8C3).withValues(alpha: 0.6),
-                    const Color(0xFF8CAF7B).withValues(alpha: 0.2),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.3, 0.7, 1.0],
-                ),
-              ),
-            ),
-            // Button with shadow
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 30,
-                    spreadRadius: 4,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
                 borderRadius: BorderRadius.circular(100),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.white.withValues(alpha: 0.6),
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.3)
-                            : Colors.white.withValues(alpha: 0.8),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Center(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: Icon(
-                          _isSearchExpanded
-                              ? Icons.close_rounded
-                              : Icons.search_rounded,
-                          key: ValueKey(_isSearchExpanded),
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFFE5395E),
-                          size: 28,
-                        ),
-                      ),
-                    ),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.white.withValues(alpha: 0.4),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.3)
+                      : Colors.white,
+                  width: 1.5,
+                ),
+              ),
+              child: Center(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Icon(
+                    _isSearchExpanded
+                        ? Icons.close_rounded
+                        : Icons.search_rounded,
+                    key: ValueKey(_isSearchExpanded),
+                    color: isDark
+                        ? Colors.white
+                        : const Color(0xFFE5395E),
+                    size: 28,
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
