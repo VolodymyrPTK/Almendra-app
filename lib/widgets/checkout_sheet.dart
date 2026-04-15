@@ -350,13 +350,14 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
         },
         'items': cart.items.map((e) => e.toMap()).toList(),
         'total': cart.total,
-        'payment': paymentMethod == 'liqpay' ? 'payd' : 'paylater',
+        'payment': paymentMethod == 'liqpay' ? 'payNow' : 'payLater',
         'orderStatus': 'Processing',
         'paymentStatus': paymentMethod == 'liqpay' ? 'success' : 'pending',
         'userType': 'authenticated',
         'oblast': '',
         'raion': '',
         'time': _formatOrderTime(DateTime.now()),
+        'orderOnApp': true,
       };
 
       // 1. Write order to top-level 'orders' collection (matches web)

@@ -22,6 +22,7 @@ class Product {
   final bool isFreeSugar;
   final bool isFreeLactosa;
   final bool isKeto;
+  final bool isLowKcal;
   final bool outOfStock;
 
   const Product({
@@ -46,6 +47,7 @@ class Product {
     this.isFreeSugar = false,
     this.isFreeLactosa = false,
     this.isKeto = false,
+    this.isLowKcal = false,
     this.outOfStock = false,
   });
 
@@ -74,6 +76,7 @@ class Product {
       isFreeSugar: _toBool(data['isFreeSugar'] ?? data['freeSugar']),
       isFreeLactosa: _toBool(data['isFreeLactosa'] ?? data['freeLactosa']),
       isKeto: _toBool(data['isKeto'] ?? data['keto']),
+      isLowKcal: _toBool(data['isLowKcal'] ?? data['lowKcal']),
       outOfStock: _toBool(data['outOfStock'] ?? data['isOutOfStock']),
     );
   }
@@ -103,6 +106,7 @@ class Product {
     if (isFreeSugar) tags.add('Без цукру');
     if (isFreeLactosa) tags.add('Без лактози');
     if (isKeto) tags.add('Кето');
+    if (isLowKcal) tags.add('Низькокалорійні');
     return tags;
   }
 }

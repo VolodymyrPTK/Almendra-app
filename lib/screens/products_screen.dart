@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart' as ap;
 import '../providers/cart_provider.dart';
+import '../providers/home_overlay_provider.dart';
 import '../providers/products_provider.dart';
 import '../widgets/auth_sheet.dart';
 import '../widgets/cart_sheet.dart';
@@ -54,13 +55,31 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text(
-          'Almendra',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 26,
-            height: 1.1,
-            letterSpacing: -0.5,
+        title: GestureDetector(
+          onTap: () {
+            context.read<HomeOverlayProvider>().show();
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Almendra',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 26,
+                  height: 1.1,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 24,
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? Colors.white.withValues(alpha: 0.5) 
+                    : Colors.black.withValues(alpha: 0.3),
+              ),
+            ],
           ),
         ),
         centerTitle: false,

@@ -85,5 +85,12 @@
 		<string>fb-messenger-share-api</string>
 		<string>fbshareextension</string>
 	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Allow the debugger to connect to your device.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_dartobservatory._tcp</string>
+		<string>_dartVmService._tcp</string>
+	</array>
 </dict>
 </plist>

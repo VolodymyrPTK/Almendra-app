@@ -256,7 +256,8 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
       'Без цукру': 'freeSugar',
       'Без глютену': 'freeGluten',
       'Без лактози': 'freeLactosa',
-      'Низьковуглеводний': 'lowCarbo',
+      'Низькокалорійні': 'lowKcal',
+      'Keto': 'keto',
       'Vegan': 'vegan',
       'Protein': 'proteinik',
     };
