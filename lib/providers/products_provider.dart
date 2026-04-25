@@ -18,6 +18,7 @@ class ProductsProvider extends ChangeNotifier {
   String? _errorMessage;
   List<String>? _currentCategoryFilter;
   final List<String> _currentBooleanFilters = [];
+  bool _fetchingOutOfStockPhase = false;
 
   List<Product> get products => _products;
   ProductsStatus get status => _status;
@@ -31,16 +32,34 @@ class ProductsProvider extends ChangeNotifier {
 
     _status = ProductsStatus.loading;
     _errorMessage = null;
+    _fetchingOutOfStockPhase = false;
     notifyListeners();
 
     try {
       final result = await _repository.fetchFirstPage(
         categoryFilter: _currentCategoryFilter,
         booleanFilters: _currentBooleanFilters,
+        outOfStock: false,
       );
       _products = result.products;
       _lastDocument = result.lastDoc;
       _hasMore = result.products.length >= 15;
+
+      // If category is selected and we have no more in-stock, try to start out-of-stock phase
+      if (!_hasMore && _currentCategoryFilter != null) {
+        final outResult = await _repository.fetchFirstPage(
+          categoryFilter: _currentCategoryFilter,
+          booleanFilters: _currentBooleanFilters,
+          outOfStock: true,
+        );
+        if (outResult.products.isNotEmpty) {
+          _products.addAll(outResult.products);
+          _lastDocument = outResult.lastDoc;
+          _hasMore = outResult.products.length >= 15;
+          _fetchingOutOfStockPhase = true;
+        }
+      }
+
       _status = ProductsStatus.success;
     } catch (e) {
       _status = ProductsStatus.error;
@@ -53,8 +72,7 @@ class ProductsProvider extends ChangeNotifier {
   Future<void> loadMore() async {
     if (!_hasMore ||
         _status == ProductsStatus.loadingMore ||
-        _status == ProductsStatus.loading ||
-        _lastDocument == null) {
+        _status == ProductsStatus.loading) {
       return;
     }
 
@@ -62,14 +80,60 @@ class ProductsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _repository.fetchNextPage(
-        _lastDocument!,
-        categoryFilter: _currentCategoryFilter,
-        booleanFilters: _currentBooleanFilters,
-      );
-      _products = [..._products, ...result.products];
-      _lastDocument = result.lastDoc ?? _lastDocument;
-      _hasMore = result.products.length >= 15;
+      if (!_fetchingOutOfStockPhase) {
+        // Still in In-Stock phase
+        if (_lastDocument == null) {
+            // This case should theoretically not happen if _hasMore is true but lastDoc is null
+            // unless the first page was empty and we didn't transition yet.
+            _status = ProductsStatus.success;
+            notifyListeners();
+            return;
+        }
+        final result = await _repository.fetchNextPage(
+          _lastDocument!,
+          categoryFilter: _currentCategoryFilter,
+          booleanFilters: _currentBooleanFilters,
+          outOfStock: false,
+        );
+        _products = [..._products, ...result.products];
+        _lastDocument = result.lastDoc;
+        
+        if (result.products.length < 15) {
+          // Finished In-Stock. Check if we should start Out-of-Stock phase
+          if (_currentCategoryFilter != null) {
+            _fetchingOutOfStockPhase = true;
+            final outResult = await _repository.fetchFirstPage(
+              categoryFilter: _currentCategoryFilter,
+              booleanFilters: _currentBooleanFilters,
+              outOfStock: true,
+            );
+            _products.addAll(outResult.products);
+            _lastDocument = outResult.lastDoc;
+            _hasMore = outResult.products.length >= 15;
+          } else {
+            _hasMore = false;
+          }
+        } else {
+          _hasMore = true;
+        }
+      } else {
+        // In Out-of-Stock phase
+        if (_lastDocument == null) {
+            _hasMore = false;
+            _status = ProductsStatus.success;
+            notifyListeners();
+            return;
+        }
+        final result = await _repository.fetchNextPage(
+          _lastDocument!,
+          categoryFilter: _currentCategoryFilter,
+          booleanFilters: _currentBooleanFilters,
+          outOfStock: true,
+        );
+        _products = [..._products, ...result.products];
+        _lastDocument = result.lastDoc;
+        _hasMore = result.products.length >= 15;
+      }
       _status = ProductsStatus.success;
     } catch (e) {
       _status = ProductsStatus.error;
@@ -122,5 +186,16 @@ class ProductsProvider extends ChangeNotifier {
     _lastDocument = null;
     _hasMore = true;
     loadProducts();
+  }
+
+  Future<List<Product>> fetchFavorites(List<String> ids) {
+    return _repository.fetchFavorites(ids);
+  }
+
+  void _sortProducts() {
+    _products.sort((a, b) {
+      if (a.outOfStock == b.outOfStock) return 0;
+      return a.outOfStock ? 1 : -1;
+    });
   }
 }

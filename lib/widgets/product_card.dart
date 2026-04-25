@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../providers/cart_provider.dart';
+import '../providers/favorites_provider.dart';
 import 'auth_sheet.dart';
 import 'product_detail_sheet.dart';
 
@@ -18,7 +19,7 @@ class _ProductCardState extends State<ProductCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pressCtrl;
   late final Animation<double> _pressAnim;
-  bool _added = false;
+  bool _addedToCart = false;
 
   @override
   void initState() {
@@ -40,6 +41,7 @@ class _ProductCardState extends State<ProductCard>
   }
 
   Future<void> _onAddToCart() async {
+    if (widget.product.outOfStock) return;
     await _pressCtrl.forward();
     await _pressCtrl.reverse();
     if (!mounted) return;
@@ -49,12 +51,11 @@ class _ProductCardState extends State<ProductCard>
 
     if (!mounted) return;
     if (!added) {
-      // not logged in
       AuthSheet.show(context);
       return;
     }
 
-    setState(() => _added = true);
+    setState(() => _addedToCart = true);
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -63,13 +64,46 @@ class _ProductCardState extends State<ProductCard>
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF8CAF7B),
+        backgroundColor: const Color(0xFFE8734A),
         duration: const Duration(seconds: 2),
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       ),
     );
+  }
+
+  Future<void> _onToggleFavorite() async {
+    await _pressCtrl.forward();
+    await _pressCtrl.reverse();
+    if (!mounted) return;
+
+    final favs = context.read<FavoritesProvider>();
+    final success = await favs.toggleFavorite(widget.product.id);
+
+    if (!mounted) return;
+    if (!success) {
+      AuthSheet.show(context);
+      return;
+    }
+
+    if (favs.isFavorite(widget.product.id)) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '«${widget.product.name}» додано в улюблені',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFFE8734A),
+          duration: const Duration(seconds: 2),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        ),
+      );
+    }
   }
 
   @override
@@ -89,11 +123,21 @@ class _ProductCardState extends State<ProductCard>
         ? Colors.white70
         : const Color(0xFF7A6F63);
 
+    final isOutOfStock = widget.product.outOfStock;
+    final isFavorite =
+        context.watch<FavoritesProvider>().isFavorite(widget.product.id);
+
     return ScaleTransition(
       scale: _pressAnim,
       child: GestureDetector(
         onTap: () => ProductDetailSheet.show(context, widget.product),
         child: Container(
+          foregroundDecoration: isOutOfStock
+              ? BoxDecoration(
+                  color: Colors.white.withValues(alpha: isDark ? 0.05 : 0.2),
+                  borderRadius: BorderRadius.circular(28),
+                )
+              : null,
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: baseColor,
@@ -134,18 +178,30 @@ class _ProductCardState extends State<ProductCard>
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: widget.product.imageUrl != null
-                      ? Transform.scale(
-                          scale: 1.25,
-                          child: CachedNetworkImage(
-                            imageUrl: widget.product.imageUrl!,
-                            fit: BoxFit.contain,
-                            placeholder: (_, __) => const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                            errorWidget: (_, __, ___) => Icon(
-                              Icons.restaurant_rounded,
-                              size: 48,
-                              color: textColor.withValues(alpha: 0.2),
+                      ? ColorFiltered(
+                          colorFilter: isOutOfStock
+                              ? const ColorFilter.matrix([
+                                  0.2126, 0.7152, 0.0722, 0, 0,
+                                  0.2126, 0.7152, 0.0722, 0, 0,
+                                  0.2126, 0.7152, 0.0722, 0, 0,
+                                  0, 0, 0, 1, 0,
+                                ])
+                              : const ColorFilter.mode(
+                                  Colors.transparent, BlendMode.multiply),
+                          child: Transform.scale(
+                            scale: 1.25,
+                            child: CachedNetworkImage(
+                              imageUrl: widget.product.imageUrl!,
+                              fit: BoxFit.contain,
+                              placeholder: (_, __) => const Center(
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              errorWidget: (_, __, ___) => Icon(
+                                Icons.restaurant_rounded,
+                                size: 48,
+                                color: textColor.withValues(alpha: 0.2),
+                              ),
                             ),
                           ),
                         )
@@ -206,84 +262,136 @@ class _ProductCardState extends State<ProductCard>
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
                   children: [
-                    // Price Tag (wider)
-                    Expanded(
-                      child: Container(
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: baseColor,
-                          borderRadius: BorderRadius.circular(19),
-                          border: Border.all(
-                            color: darkShadow.withValues(alpha: 0.3),
-                            width: 0.5,
-                          ),
-                        ),
-                        child: Container(
-                          margin: const EdgeInsets.all(1),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(18),
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [darkShadow.withValues(alpha: 0.15), baseColor],
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${widget.product.sellPrice.toStringAsFixed(0)} ₴',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                color: subTextColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Add to Cart Button (Circular)
+                    // Favorite Button (Circular)
                     GestureDetector(
-                      onTap: _onAddToCart,
+                      onTap: _onToggleFavorite,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         width: 38,
                         height: 38,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: _added
-                                ? [
-                                    const Color(0xFF6B8E5E),
-                                    const Color(0xFF8CAF7B),
-                                  ]
-                                : [
-                                    const Color(0xFFA8C69F),
-                                    const Color(0xFF8CAF7B),
-                                  ],
+                          color: baseColor,
+                          border: Border.all(
+                            color: darkShadow.withValues(alpha: 0.15),
+                            width: 0.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF8CAF7B).withValues(alpha: 0.4),
-                              offset: const Offset(3, 3),
-                              blurRadius: 8,
-                            ),
-                            BoxShadow(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              offset: const Offset(-2, -2),
+                              color: darkShadow.withValues(alpha: 0.15),
+                              offset: const Offset(2, 2),
                               blurRadius: 4,
                             ),
+                            if (isFavorite)
+                              BoxShadow(
+                                color: const Color(0xFFE8734A).withValues(alpha: 0.2), // gentle red glow
+                                offset: const Offset(0, 2),
+                                blurRadius: 6,
+                              ),
                           ],
                         ),
                         child: Center(
                           child: Icon(
-                            _added
-                                ? Icons.check_rounded
-                                : Icons.shopping_cart_outlined,
+                            isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                             size: 18,
-                            color: Colors.white,
+                            color: isFavorite
+                                ? const Color(0xFFE8734A)
+                                : subTextColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Combined Price & Cart Pill
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _onAddToCart,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          height: 38,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(19),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: isOutOfStock
+                                  ? [
+                                      subTextColor.withValues(alpha: 0.3),
+                                      subTextColor.withValues(alpha: 0.4),
+                                    ]
+                                  : _addedToCart
+                                      ? [
+                                          const Color(0xFFE8734A)
+                                              .withValues(alpha: 0.7),
+                                          const Color(0xFFE8734A),
+                                        ]
+                                      : [
+                                          const Color(0xFFF19E81),
+                                          const Color(0xFFE8734A),
+                                        ],
+                            ),
+                            boxShadow: [
+                              if (!isOutOfStock)
+                                BoxShadow(
+                                  color: const Color(0xFFE8734A)
+                                      .withValues(alpha: 0.35),
+                                  offset: const Offset(0, 6),
+                                  blurRadius: 16,
+                                ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              // Content
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Center(
+                                      child: AnimatedDefaultTextStyle(
+                                        duration: const Duration(milliseconds: 250),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                          letterSpacing: -0.2,
+                                        ),
+                                        child: Text(
+                                          '${widget.product.sellPrice.toStringAsFixed(0)} ₴',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 44,
+                                    child: Center(
+                                      child: AnimatedSwitcher(
+                                        duration: const Duration(milliseconds: 200),
+                                        child: Icon(
+                                          _addedToCart
+                                              ? Icons.check_rounded
+                                              : isOutOfStock
+                                                  ? Icons.not_interested_rounded
+                                                  : Icons.shopping_cart_outlined,
+                                          key: ValueKey(
+                                              '${_addedToCart}_$isOutOfStock'),
+                                          size: 20,
+                                          color: isOutOfStock
+                                              ? Colors.white54
+                                              : Colors.white,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black.withValues(alpha: 0.25),
+                                              offset: const Offset(0, 2),
+                                              blurRadius: 4,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ),

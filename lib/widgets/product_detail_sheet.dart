@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../providers/cart_provider.dart';
+import '../providers/favorites_provider.dart';
 import 'auth_sheet.dart';
 
 class ProductDetailSheet extends StatefulWidget {
@@ -13,12 +14,16 @@ class ProductDetailSheet extends StatefulWidget {
 
   static void show(BuildContext context, Product product) {
     final cart = context.read<CartProvider>();
+    final favs = context.read<FavoritesProvider>();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ChangeNotifierProvider.value(
-        value: cart,
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: cart),
+          ChangeNotifierProvider.value(value: favs),
+        ],
         child: ProductDetailSheet(product: product),
       ),
     );
@@ -295,137 +300,232 @@ class _ProductDetailSheetState extends State<ProductDetailSheet>
             ),
 
             // ── Bottom Action Bar ────────────────────────────
-            Container(
-              padding: EdgeInsets.fromLTRB(
-                24,
-                16,
-                24,
-                MediaQuery.of(context).padding.bottom + 16,
-              ),
-              decoration: BoxDecoration(
-                color: bgColor,
-                border: Border(top: BorderSide(color: dividerColor)),
-              ),
-              child: Row(
-                children: [
-                  // Price
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Ціна',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: subTextColor,
-                          fontWeight: FontWeight.w600,
+            Builder(builder: (context) {
+              final isFavorite = context
+                  .watch<FavoritesProvider>()
+                  .isFavorite(product.id);
+              final cardBg =
+                  isDark ? const Color(0xFF302B26) : Colors.white;
+              final borderCol = isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : const Color(0xFFAEA598).withValues(alpha: 0.2);
+              return Container(
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  16,
+                  24,
+                  MediaQuery.of(context).padding.bottom + 16,
+                ),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  border: Border(top: BorderSide(color: dividerColor)),
+                ),
+                child: Row(
+                  children: [
+                    // Price
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Ціна',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: subTextColor,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      Text(
-                        '${product.sellPrice.toStringAsFixed(0)} ₴',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: textColor,
+                        Text(
+                          '${product.sellPrice.toStringAsFixed(0)} ₴',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: textColor,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 20),
-                  // Add to Cart Button
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () async {
-                        final cart = context.read<CartProvider>();
-                        try {
-                          final added = await cart.addToCart(product);
-                          if (!added) {
-                            // Not logged in — show auth sheet
+                      ],
+                    ),
+                    const SizedBox(width: 16),
+                    // Add to Cart Button
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: product.outOfStock ? null : () async {
+                          final cart = context.read<CartProvider>();
+                          try {
+                            final added = await cart.addToCart(product);
+                            if (!added) {
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                AuthSheet.show(context);
+                              }
+                              return;
+                            }
                             if (context.mounted) {
                               Navigator.pop(context);
-                              AuthSheet.show(context);
-                            }
-                            return;
-                          }
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  '${product.name} додано в кошик',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600),
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    '${product.name} додано в кошик',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: const Color(0xFFE8734A),
+                                  duration: const Duration(seconds: 2),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(12)),
+                                  margin: const EdgeInsets.fromLTRB(
+                                      16, 0, 16, 16),
                                 ),
-                                behavior: SnackBarBehavior.floating,
-                                backgroundColor: const Color(0xFF8CAF7B),
-                                duration: const Duration(seconds: 2),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                margin:
-                                    const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                              ),
-                            );
+                              );
+                            }
+                          } catch (e) {
+                            debugPrint('addToCart error: $e');
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Помилка: $e'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: Colors.red[700],
+                                  duration: const Duration(seconds: 4),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(12)),
+                                  margin: const EdgeInsets.fromLTRB(
+                                      16, 0, 16, 16),
+                                ),
+                              );
+                            }
                           }
-                        } catch (e) {
-                          debugPrint('addToCart error: $e');
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Помилка: $e'),
-                                behavior: SnackBarBehavior.floating,
-                                backgroundColor: Colors.red[700],
-                                duration: const Duration(seconds: 4),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                margin:
-                                    const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                              ),
-                            );
-                          }
-                        }
-                      },
-                      child: Container(
-                        height: 52,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFFA8C69F), Color(0xFF8CAF7B)],
+                        },
+                        child: Container(
+                          height: 52,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: product.outOfStock
+                                  ? [
+                                      subTextColor.withValues(alpha: 0.2),
+                                      subTextColor.withValues(alpha: 0.3)
+                                    ]
+                                  : const [Color(0xFFF19E81), Color(0xFFE8734A)],
+                            ),
+                            borderRadius: BorderRadius.circular(26),
+                            boxShadow: [
+                              if (!product.outOfStock)
+                                BoxShadow(
+                                  color: const Color(0xFFE8734A)
+                                      .withValues(alpha: 0.35),
+                                  offset: const Offset(0, 6),
+                                  blurRadius: 16,
+                                ),
+                            ],
                           ),
-                          borderRadius: BorderRadius.circular(26),
-                          boxShadow: [
-                            BoxShadow(
-                              color: accentGreen.withValues(alpha: 0.35),
-                              offset: const Offset(0, 6),
-                              blurRadius: 16,
-                            ),
-                          ],
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.shopping_cart_outlined,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Додати в кошик',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                product.outOfStock
+                                    ? Icons.not_interested_rounded
+                                    : Icons.shopping_cart_outlined,
+                                size: 20,
+                                color: product.outOfStock
+                                    ? Colors.white54
+                                    : Colors.white,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 8),
+                              Text(
+                                product.outOfStock
+                                    ? 'Немає в наявності'
+                                    : 'Додати в кошик',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: product.outOfStock
+                                      ? Colors.white54
+                                      : Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
+                    const SizedBox(width: 12),
+                    // Add to Favorites Button
+                    GestureDetector(
+                      onTap: () async {
+                        final favs = context.read<FavoritesProvider>();
+                        final success =
+                            await favs.toggleFavorite(product.id);
+                        if (!success && context.mounted) {
+                          Navigator.pop(context);
+                          AuthSheet.show(context);
+                          return;
+                        }
+                        if (context.mounted && favs.isFavorite(product.id)) {
+                          ScaffoldMessenger.of(context)
+                              .hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                '«${product.name}» додано в улюблені',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: const Color(0xFFE8734A),
+                              duration: const Duration(seconds: 2),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            ),
+                          );
+                        }
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: cardBg,
+                          border: Border.all(color: borderCol, width: 0.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: borderCol,
+                              offset: const Offset(2, 2),
+                              blurRadius: 6,
+                            ),
+                            if (isFavorite)
+                              BoxShadow(
+                                color: const Color(0xFFE8734A)
+                                    .withValues(alpha: 0.25),
+                                offset: const Offset(0, 4),
+                                blurRadius: 10,
+                              ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(
+                            isFavorite
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            size: 22,
+                            color: isFavorite
+                                ? const Color(0xFFE8734A)
+                                : subTextColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+
           ],
         ),
       ),

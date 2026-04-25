@@ -33,51 +33,56 @@ class HomeOverlay extends StatelessWidget {
           SafeArea(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 8),
-                  Text(
-                    'Вітаємо в\nAlmendra',
-                    style: TextStyle(
-                      fontSize: 29,
-                      fontWeight: FontWeight.w900,
-                      height: 1.1,
-                      letterSpacing: -1,
-                      color: isDark ? Colors.white : const Color(0xFF3B3228),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 8),
+                    Text(
+                      'Вітаємо в\nAlmendra',
+                      style: TextStyle(
+                        fontSize: 29,
+                        fontWeight: FontWeight.w900,
+                        height: 1.1,
+                        letterSpacing: -1,
+                        color: isDark ? Colors.white : const Color(0xFF3B3228),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Здорова їжа та натуральні продукти',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white70 : const Color(0xFF6B6258),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Здорова їжа та натуральні продукти',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: isDark
+                            ? Colors.white70
+                            : const Color(0xFF6B6258),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  _CatalogButton(
-                    onTap: () {
-                      final provider = context.read<ProductsProvider>();
-                      provider.clearBooleanFilters();
-                      provider.setCategoryFilter(null);
-                      context.read<HomeOverlayProvider>().hide();
-                    },
-                  ),
+                    const SizedBox(height: 24),
+                    _CatalogButton(
+                      onTap: () {
+                        final provider = context.read<ProductsProvider>();
+                        provider.clearBooleanFilters();
+                        provider.setCategoryFilter(null);
+                        context.read<HomeOverlayProvider>().hide();
+                      },
+                    ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Grid of Filters
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 1.15,
-                    children: [
+                    // Grid of Filters
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 1.15,
+                      children: [
                         _FilterCard(
                           title: 'Без цукру',
                           subtitle: 'Продукти',
@@ -146,12 +151,12 @@ class HomeOverlay extends StatelessWidget {
                         ),
                       ],
                     ),
-                  const SizedBox(height: 24),
-                  _AboutSection(),
-                ],
+                    const SizedBox(height: 24),
+                    _AboutSection(),
+                  ],
+                ),
               ),
             ),
-          ),
           ),
         ],
       ),
@@ -383,12 +388,18 @@ class _AboutSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                 padding: const EdgeInsets.all(16),
-                 decoration: BoxDecoration(
-                   color: isDark ? Colors.white10 : Colors.black.withOpacity(0.04),
-                   shape: BoxShape.circle,
-                 ),
-                 child: Icon(Icons.local_shipping_rounded, color: fgColor, size: 32),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white10
+                      : Colors.black.withOpacity(0.04),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.local_shipping_rounded,
+                  color: fgColor,
+                  size: 32,
+                ),
               ),
               const SizedBox(width: 20),
               Expanded(
@@ -406,9 +417,11 @@ class _AboutSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Новою Поштою та УкрПоштою.\nЕкспрес відправка за 48 годин.\nБезкоштовно від 3000 грн.',
+                      'Новою Поштою та УкрПоштою.\nВідправка за 72 годин.\nБезкоштовно від 3000 грн.',
                       style: TextStyle(
-                        color: isDark ? Colors.white70 : const Color(0xFF6B6258),
+                        color: isDark
+                            ? Colors.white70
+                            : const Color(0xFF6B6258),
                         fontSize: 13,
                         height: 1.4,
                         fontWeight: FontWeight.w500,
@@ -426,18 +439,24 @@ class _AboutSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
+            border: Border.all(
+              color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+            ),
           ),
           child: Column(
             children: [
               // Beautiful Mini Map Header
               GestureDetector(
                 onTap: () {
-                  final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+                  final isIOS =
+                      Theme.of(context).platform == TargetPlatform.iOS;
                   final url = isIOS
                       ? 'http://maps.apple.com/?ll=48.68322,26.58368&q=Almendra'
                       : 'https://www.google.com/maps/search/?api=1&query=48.68322,26.58368';
-                  launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                  launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
                 },
                 child: const SizedBox(
                   height: 140,
@@ -445,7 +464,7 @@ class _AboutSection extends StatelessWidget {
                   child: _MiniMapBlock(),
                 ),
               ),
-              
+
               // Contact Action Buttons below Map
               Padding(
                 padding: const EdgeInsets.all(24),
@@ -454,27 +473,46 @@ class _AboutSection extends StatelessWidget {
                   children: [
                     Text(
                       'Зв\'яжіться з нами',
-                      style: TextStyle(color: fgColor, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                      style: TextStyle(
+                        color: fgColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     Row(
                       children: [
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => launchUrl(Uri.parse('tel:+380983298507')),
+                            onTap: () =>
+                                launchUrl(Uri.parse('tel:+380983298507')),
                             behavior: HitTestBehavior.opaque,
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
                                 color: accentColor.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: accentColor.withOpacity(0.2)),
+                                border: Border.all(
+                                  color: accentColor.withOpacity(0.2),
+                                ),
                               ),
                               child: Column(
                                 children: [
-                                  Icon(Icons.phone_in_talk_rounded, color: accentColor, size: 24),
+                                  Icon(
+                                    Icons.phone_in_talk_rounded,
+                                    color: accentColor,
+                                    size: 24,
+                                  ),
                                   const SizedBox(height: 4),
-                                  Text('Подзвонити', style: TextStyle(color: accentColor, fontSize: 11, fontWeight: FontWeight.w700)),
+                                  Text(
+                                    'Подзвонити',
+                                    style: TextStyle(
+                                      color: accentColor,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -483,20 +521,35 @@ class _AboutSection extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => launchUrl(Uri.parse('mailto:almendrasuperfoods@gmail.com')),
+                            onTap: () => launchUrl(
+                              Uri.parse('mailto:almendrasuperfoods@gmail.com'),
+                            ),
                             behavior: HitTestBehavior.opaque,
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
                                 color: Colors.blueAccent.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.blueAccent.withOpacity(0.2)),
+                                border: Border.all(
+                                  color: Colors.blueAccent.withOpacity(0.2),
+                                ),
                               ),
                               child: Column(
                                 children: [
-                                  const Icon(Icons.mail_rounded, color: Colors.blueAccent, size: 24),
+                                  const Icon(
+                                    Icons.mail_rounded,
+                                    color: Colors.blueAccent,
+                                    size: 24,
+                                  ),
                                   const SizedBox(height: 4),
-                                  const Text('Написати', style: TextStyle(color: Colors.blueAccent, fontSize: 11, fontWeight: FontWeight.w700)),
+                                  const Text(
+                                    'Написати',
+                                    style: TextStyle(
+                                      color: Colors.blueAccent,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -511,19 +564,42 @@ class _AboutSection extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.white10 : Colors.black.withOpacity(0.04), 
-                            shape: BoxShape.circle
+                            color: isDark
+                                ? Colors.white10
+                                : Colors.black.withOpacity(0.04),
+                            shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.store_rounded, size: 20, color: fgColor),
+                          child: Icon(
+                            Icons.store_rounded,
+                            size: 20,
+                            color: fgColor,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('м. Кам\'янець-Подільський, вул. Лесі Українки, 18', style: TextStyle(color: fgColor, fontSize: 13, fontWeight: FontWeight.w600, height: 1.3)),
+                              Text(
+                                'м. Кам\'янець-Подільський, вул. Лесі Українки, 18',
+                                style: TextStyle(
+                                  color: fgColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.3,
+                                ),
+                              ),
                               const SizedBox(height: 4),
-                              Text('Без вихідних • 10:00 - 19:00', style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12, fontWeight: FontWeight.w500)),
+                              Text(
+                                'Без вихідних • 10:00 - 19:00',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white54
+                                      : Colors.black54,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -586,24 +662,32 @@ class _MiniMapBlockState extends State<_MiniMapBlock> {
       child: Stack(
         children: [
           IgnorePointer(
-            ignoring: true, // Prevents intercepting vertical scroll of the main view
+            ignoring:
+                true, // Prevents intercepting vertical scroll of the main view
             child: WebViewWidget(controller: _controller),
           ),
           // Glass overlay with text
-          Container(
-            color: Colors.black.withOpacity(0.15),
-          ),
+          Container(color: Colors.black.withOpacity(0.15)),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8, offset: const Offset(0, 4))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -611,8 +695,14 @@ class _MiniMapBlockState extends State<_MiniMapBlock> {
                       Icon(Icons.location_on, color: Colors.red[500], size: 16),
                       const SizedBox(width: 6),
                       Text(
-                        isIOS ? 'Відкрити в Apple Maps' : 'Відкрити в Google Maps', 
-                        style: const TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w700)
+                        isIOS
+                            ? 'Відкрити в Apple Maps'
+                            : 'Відкрити в Google Maps',
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                   ),

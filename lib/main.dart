@@ -7,6 +7,7 @@ import 'providers/auth_provider.dart' as ap;
 import 'providers/cart_provider.dart';
 import 'providers/products_provider.dart';
 import 'providers/home_overlay_provider.dart';
+import 'providers/favorites_provider.dart';
 import 'screens/root_screen.dart';
 
 Future<void> main() async {
@@ -31,6 +32,7 @@ class AlmendraApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProductsProvider()),
         ChangeNotifierProvider(create: (_) => ap.AuthProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
         ChangeNotifierProvider(create: (_) => HomeOverlayProvider()),
       ],
       child: MaterialApp(

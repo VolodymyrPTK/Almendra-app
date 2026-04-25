@@ -11,12 +11,17 @@ class ProductsRepository {
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('products');
 
-  /// Fetches the first page of products.
   Future<({List<Product> products, DocumentSnapshot? lastDoc})> fetchFirstPage({
     List<String>? categoryFilter,
     List<String>? booleanFilters,
+    bool? outOfStock,
   }) async {
     Query<Map<String, dynamic>> query = _collection;
+
+    if (outOfStock != null) {
+      query = query.where('outOfStock', isEqualTo: outOfStock);
+    }
+
     if (categoryFilter != null && categoryFilter.isNotEmpty) {
       if (categoryFilter.length == 1) {
         query = query.where('category', isEqualTo: categoryFilter.first);
@@ -37,7 +42,9 @@ class ProductsRepository {
         .limit(_pageSize)
         .get(const GetOptions(source: Source.serverAndCache));
 
-    var docs = snapshot.docs;
+    final lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+    
+    var docs = snapshot.docs.toList();
     docs.sort((a, b) {
       final nameA = (a.data()['name']?.toString() ?? '').toLowerCase();
       final nameB = (b.data()['name']?.toString() ?? '').toLowerCase();
@@ -45,7 +52,6 @@ class ProductsRepository {
     });
 
     final products = docs.map((doc) => Product.fromFirestore(doc)).toList();
-    final lastDoc = docs.isNotEmpty ? docs.last : null;
 
     return (products: products, lastDoc: lastDoc);
   }
@@ -55,8 +61,13 @@ class ProductsRepository {
     DocumentSnapshot lastDocument, {
     List<String>? categoryFilter,
     List<String>? booleanFilters,
+    bool? outOfStock,
   }) async {
     Query<Map<String, dynamic>> query = _collection;
+
+    if (outOfStock != null) {
+      query = query.where('outOfStock', isEqualTo: outOfStock);
+    }
     if (categoryFilter != null && categoryFilter.isNotEmpty) {
       if (categoryFilter.length == 1) {
         query = query.where('category', isEqualTo: categoryFilter.first);
@@ -76,7 +87,9 @@ class ProductsRepository {
         .limit(_pageSize)
         .get(const GetOptions(source: Source.serverAndCache));
 
-    var docs = snapshot.docs;
+    final lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+
+    var docs = snapshot.docs.toList();
     docs.sort((a, b) {
       final nameA = (a.data()['name']?.toString() ?? '').toLowerCase();
       final nameB = (b.data()['name']?.toString() ?? '').toLowerCase();
@@ -84,7 +97,6 @@ class ProductsRepository {
     });
 
     final products = docs.map((doc) => Product.fromFirestore(doc)).toList();
-    final lastDoc = docs.isNotEmpty ? docs.last : null;
 
     return (products: products, lastDoc: lastDoc);
   }
@@ -139,6 +151,19 @@ class ProductsRepository {
     final outOfStock = allMatches.where((p) => p.outOfStock);
 
     return [...inStock, ...outOfStock];
+  }
+
+  /// Fetches products by a list of IDs.
+  Future<List<Product>> fetchFavorites(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    
+    // If not cached, fetch all products once
+    if (_productCache == null) {
+      final snapshot = await _collection.get(const GetOptions(source: Source.serverAndCache));
+      _productCache = snapshot.docs.map(Product.fromFirestore).toList();
+    }
+
+    return _productCache!.where((p) => ids.contains(p.id)).toList();
   }
 
   /// Fetches categories and subcategories.

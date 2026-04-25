@@ -7,6 +7,8 @@ import '../providers/auth_provider.dart' as ap;
 import '../providers/cart_provider.dart';
 import '../providers/home_overlay_provider.dart';
 import '../providers/products_provider.dart';
+import '../providers/favorites_provider.dart';
+import '../models/product.dart';
 import '../widgets/auth_sheet.dart';
 import '../widgets/cart_sheet.dart';
 import '../widgets/custom_bottom_bar.dart';
@@ -411,7 +413,10 @@ class _ProductList extends StatelessWidget {
           if (index == products.length) {
             return const Center(child: CircularProgressIndicator());
           }
-          return ProductCard(product: products[index]);
+          return ProductCard(
+            key: ValueKey(products[index].id),
+            product: products[index],
+          );
         },
       ),
     );
@@ -509,7 +514,7 @@ class _ErrorView extends StatelessWidget {
 // ── User Profile Sheet ────────────────────────────────────────────────────────
 // Full-panel cart-style sheet with view/edit modes for profile data.
 
-enum _ProfileTab { info, orders }
+enum _ProfileTab { info, favorites, orders }
 
 class _UserProfileSheet extends StatefulWidget {
   const _UserProfileSheet({required this.auth});
@@ -817,7 +822,9 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                       const SizedBox(width: 14),
                       Expanded(
                         child: Text(
-                          _tab == _ProfileTab.info ? 'Профіль' : 'Замовлення',
+                          _tab == _ProfileTab.info 
+                              ? 'Профіль' 
+                              : (_tab == _ProfileTab.favorites ? 'Улюблені' : 'Замовлення'),
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
@@ -849,6 +856,15 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                               active: _tab == _ProfileTab.info,
                               onTap: () =>
                                   setState(() => _tab = _ProfileTab.info),
+                              isDark: isDark,
+                            ),
+                          ),
+                          Expanded(
+                            child: _TabButton(
+                              label: 'Улюблені',
+                              active: _tab == _ProfileTab.favorites,
+                              onTap: () =>
+                                  setState(() => _tab = _ProfileTab.favorites),
                               isDark: isDark,
                             ),
                           ),
@@ -1332,7 +1348,9 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                                     ],
                                   ),
                                 )
-                              : StreamBuilder<List<Map<String, dynamic>>>(
+                              : _tab == _ProfileTab.favorites
+                                  ? _FavoritesTabView()
+                                  : StreamBuilder<List<Map<String, dynamic>>>(
                                   stream: _ordersStream(),
                                   builder: (context, snapshot) {
                                     if (snapshot.connectionState ==
@@ -2640,3 +2658,100 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
+
+class _FavoritesTabView extends StatefulWidget {
+  @override
+  State<_FavoritesTabView> createState() => _FavoritesTabViewState();
+}
+
+class _FavoritesTabViewState extends State<_FavoritesTabView> {
+  List<Product>? _products;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    final favProvider = context.read<FavoritesProvider>();
+    final prodProvider = context.read<ProductsProvider>();
+    final ids = favProvider.favorites;
+    
+    if (ids.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _products = [];
+          _loading = false;
+        });
+      }
+      return;
+    }
+    
+    final products = await prodProvider.fetchFavorites(ids);
+    if (mounted) {
+      setState(() {
+        _products = products;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Color(0xFF8CAF7B),
+        ),
+      );
+    }
+    
+    final favProvider = context.watch<FavoritesProvider>();
+    final currentFavIds = favProvider.favorites;
+    final displayProducts = _products?.where((p) => currentFavIds.contains(p.id)).toList() ?? [];
+
+    if (displayProducts.isEmpty) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final subCol = isDark ? Colors.white70 : const Color(0xFF5A5047);
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.favorite_border_rounded,
+              size: 48,
+              color: subCol.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Улюблених товарів поки немає',
+              style: TextStyle(
+                color: subCol,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GridView.builder(
+      key: const ValueKey('view_favorites'),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 14,
+        crossAxisSpacing: 14,
+        childAspectRatio: 0.68,
+      ),
+      itemCount: displayProducts.length,
+      itemBuilder: (context, index) {
+        return ProductCard(product: displayProducts[index]);
+      },
+    );
+  }
+}
+
