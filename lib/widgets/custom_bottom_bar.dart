@@ -106,6 +106,52 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
     super.dispose();
   }
 
+  Widget _buildGlassButton({
+    required double radius,
+    required Widget child,
+    required bool isDark,
+    double? width,
+    double? height,
+    EdgeInsetsGeometry? padding,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.white.withValues(alpha: 0.9),
+                width: 1.5,
+              ),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+
   void _onSearchChanged() {
     final query = _searchController.text.trim();
     if (query.length < 2) {
@@ -313,27 +359,51 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                           fontSize: 18,
                         ),
                       ),
-                      TextButton.icon(
-                        onPressed: () {
-                          provider.clearBooleanFilters();
-                        },
-                        icon: const Icon(Icons.refresh_rounded, size: 16),
-                        label: const Text(
-                          'Очистити',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
+                      Row(
+                        children: [
+                          TextButton.icon(
+                            onPressed: () {
+                              provider.clearBooleanFilters();
+                            },
+                            icon: const Icon(Icons.refresh_rounded, size: 16),
+                            label: const Text(
+                              'Очистити',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFFE5395E),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
                           ),
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFE5395E),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                _isFilterExpanded = false;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: _buildGlassButton(
+                              radius: 12,
+                              width: 36,
+                              height: 36,
+                              isDark: isDark,
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 18,
+                                color: fgColor,
+                              ),
+                            ),
                           ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
+                        ],
                       ),
                     ],
                   ),
@@ -498,59 +568,13 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                   padding: EdgeInsets.all(24.0),
                   child: Center(child: CircularProgressIndicator()),
                 )
-              : _buildCategoriesList(fgColor),
+              : _buildCategoriesList(fgColor, isDark),
         ),
       ),
     );
   }
 
-  Widget _buildCategoriesList(Color fgColor) {
-    final bool isDark = fgColor == Colors.white;
-    Widget buildGlassButton({
-      required double radius,
-      required Widget child,
-      double? width,
-      double? height,
-      EdgeInsetsGeometry? padding,
-    }) {
-      return Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(radius),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(radius),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              padding: padding,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.white.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(radius),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.white.withValues(alpha: 0.9),
-                  width: 1.5,
-                ),
-              ),
-              child: child,
-            ),
-          ),
-        ),
-      );
-    }
-
+  Widget _buildCategoriesList(Color fgColor, bool isDark) {
     Widget child;
     if (_selectedCategory == null) {
       // Show main categories
@@ -586,10 +610,11 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                     });
                   },
                   borderRadius: BorderRadius.circular(12),
-                  child: buildGlassButton(
+                  child: _buildGlassButton(
                     radius: 12,
                     width: 36,
                     height: 36,
+                    isDark: isDark,
                     child: Icon(Icons.close_rounded, size: 18, color: fgColor),
                   ),
                 ),
@@ -625,8 +650,9 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                         );
                       },
                       borderRadius: BorderRadius.circular(20),
-                      child: buildGlassButton(
+                      child: _buildGlassButton(
                         radius: 20,
+                        isDark: isDark,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Center(
                           child: Text(
@@ -656,8 +682,9 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                                 });
                               },
                               borderRadius: BorderRadius.circular(16),
-                              child: buildGlassButton(
+                              child: _buildGlassButton(
                                 radius: 16,
+                                isDark: isDark,
                                 width: itemWidth,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 6,
@@ -716,8 +743,9 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                     });
                   },
                   borderRadius: BorderRadius.circular(12),
-                  child: buildGlassButton(
+                  child: _buildGlassButton(
                     radius: 12,
+                    isDark: isDark,
                     width: 36,
                     height: 36,
                     child: Icon(
@@ -779,8 +807,9 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                         }
                       },
                       borderRadius: BorderRadius.circular(20),
-                      child: buildGlassButton(
+                      child: _buildGlassButton(
                         radius: 20,
+                        isDark: isDark,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Center(
                           child: Text(
@@ -814,8 +843,9 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                                     .setCategoryFilter([sub]);
                               },
                               borderRadius: BorderRadius.circular(16),
-                              child: buildGlassButton(
+                              child: _buildGlassButton(
                                 radius: 16,
+                                isDark: isDark,
                                 width: itemWidth,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 6,
