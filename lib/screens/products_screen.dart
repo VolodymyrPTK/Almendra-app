@@ -573,6 +573,9 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
   List<dynamic> _warehouseSuggestions = [];
   bool _loadingCities = false;
   bool _loadingWarehouses = false;
+  String _oblast = '';
+  String _raion = '';
+  String _settlementType = 'Місто';
 
   @override
   void initState() {
@@ -595,7 +598,7 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
       if (mounted) {
         _firstNameCtrl.text = data['firstName'] as String? ?? '';
         _secondNameCtrl.text = data['secondName'] as String? ?? '';
-        _phoneCtrl.text = data['phone'] as String? ?? '';
+        _phoneCtrl.text = _UkrPhoneFmt.format(data['phone'] as String? ?? '');
 
         _deliveryOption = data['deliveryOption'] as String? ?? 'novaPoshta';
         _novaCityCtrl.text = data['city'] as String? ?? '';
@@ -606,9 +609,11 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
             '';
         _ukrIndexCtrl.text = data['cityIndex'] as String? ?? '';
 
-        _selectedCityRef = data['cityRef'] as String?;
         _selectedWarehouseIndex = data['warehouseIndex'] as String?;
         _warehouseCategory = data['postType'] as String? ?? 'Warehouse';
+        _oblast = data['oblast'] as String? ?? '';
+        _raion = data['raion'] as String? ?? '';
+        _settlementType = data['settlementType'] as String? ?? 'Місто';
 
         setState(() => _loading = false);
       }
@@ -659,6 +664,9 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
         'cityRef': _selectedCityRef ?? '',
         'warehouseIndex': _selectedWarehouseIndex ?? '',
         'postType': _warehouseCategory,
+        'oblast': _oblast,
+        'raion': _raion,
+        'settlementType': _settlementType,
       }, SetOptions(merge: true));
       if (mounted)
         setState(() {
@@ -689,7 +697,45 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
     }
     setState(() => _loadingCities = true);
     try {
-      final results = await NovaPoshtaService.searchSettlements(query);
+      final normalizedQuery = query.trim().toLowerCase();
+      var results = await NovaPoshtaService.searchSettlements(query);
+
+      if (results.isEmpty && query.trim().contains(' ')) {
+        final firstWord = query.trim().split(' ').first;
+        if (firstWord.length >= 2) {
+          final broadResults =
+              await NovaPoshtaService.searchSettlements(firstWord);
+          final queryParts = normalizedQuery.split(' ');
+          results = broadResults.where((item) {
+            final desc = (item['Description'] ?? '').toString().toLowerCase();
+            final area =
+                (item['AreaDescription'] ?? '').toString().toLowerCase();
+            final region =
+                (item['RegionsDescription'] ?? '').toString().toLowerCase();
+            return queryParts.every((part) =>
+                desc.contains(part) ||
+                area.contains(part) ||
+                region.contains(part));
+          }).toList();
+        }
+      }
+
+      // Sort: Cities first
+      results.sort((a, b) {
+        final tA =
+            (a['SettlementTypeDescription'] ?? '').toString().toLowerCase();
+        final tB =
+            (b['SettlementTypeDescription'] ?? '').toString().toLowerCase();
+        int score(String t) {
+          if (t.contains('місто')) return 0;
+          if (t.contains('селище міського типу')) return 1;
+          if (t.contains('селище')) return 2;
+          return 3;
+        }
+
+        return score(tA).compareTo(score(tB));
+      });
+
       if (mounted)
         setState(() {
           _citySuggestions = results;
@@ -708,6 +754,9 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
       _loadingCities = false;
       _novaWarehouseCtrl.clear();
       _selectedWarehouseIndex = null;
+      _oblast = city['AreaDescription'] ?? '';
+      _raion = city['RegionsDescription'] ?? '';
+      _settlementType = city['SettlementTypeDescription'] ?? 'Місто';
     });
     String? ref = city['DeliveryCity'];
     if (ref == null || ref.isEmpty) {
@@ -1050,6 +1099,9 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                                           onCategoryChange: (c) => setState(
                                             () => _warehouseCategory = c,
                                           ),
+                                          oblast: _oblast,
+                                          raion: _raion,
+                                          settlementType: _settlementType,
                                         )
                                       else
                                         UkrFields(
@@ -1224,7 +1276,7 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                                                   _phoneCtrl.text
                                                       .trim()
                                                       .isNotEmpty
-                                                  ? _phoneCtrl.text.trim()
+                                                  ? _UkrPhoneFmt.format(_phoneCtrl.text.trim())
                                                   : '—',
                                               titleCol: titleCol,
                                               subCol: subCol,
@@ -1285,13 +1337,31 @@ class _UserProfileSheetState extends State<_UserProfileSheet> {
                                               _InfoRow(
                                                 icon: Icons
                                                     .location_city_outlined,
-                                                label: 'Місто',
+                                                label: _settlementType,
                                                 value:
                                                     _novaCityCtrl
                                                         .text
                                                         .isNotEmpty
                                                     ? _novaCityCtrl.text
                                                     : '—',
+                                                titleCol: titleCol,
+                                                subCol: subCol,
+                                                borderCol: borderCol,
+                                                showDivider: true,
+                                              ),
+                                              _InfoRow(
+                                                icon: Icons.map_outlined,
+                                                label: 'Область',
+                                                value: _oblast.isNotEmpty ? _oblast : '—',
+                                                titleCol: titleCol,
+                                                subCol: subCol,
+                                                borderCol: borderCol,
+                                                showDivider: true,
+                                              ),
+                                              _InfoRow(
+                                                icon: Icons.explore_outlined,
+                                                label: 'Район',
+                                                value: _raion.isNotEmpty ? _raion : '—',
                                                 titleCol: titleCol,
                                                 subCol: subCol,
                                                 borderCol: borderCol,
@@ -1731,6 +1801,14 @@ class _OrderCardState extends State<_OrderCard> {
     final address = widget.order['city'] ?? '';
     final warehouse =
         widget.order['warehouse'] ?? widget.order['cityIndex'] ?? '';
+    final oblast = widget.order['oblast'] as String? ?? '';
+    final raion = widget.order['raion'] as String? ?? '';
+    final fullAddress = [
+      if (raion.isNotEmpty) '$raion р-н',
+      if (oblast.isNotEmpty) oblast,
+      address,
+      warehouse,
+    ].where((s) => s.isNotEmpty).join(', ');
 
     Color statusColor;
     String statusLabel;
@@ -2018,8 +2096,8 @@ class _OrderCardState extends State<_OrderCard> {
                                               color: widget.titleCol,
                                             ),
                                           ),
-                                          Text(
-                                            '$address, $warehouse',
+                                            Text(
+                                              fullAddress,
                                             style: TextStyle(
                                               fontSize: 11,
                                               color: widget.subCol,
@@ -2383,9 +2461,8 @@ class _CyrillicNameFmt extends TextInputFormatter {
 }
 
 class _UkrPhoneFmt extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue o, TextEditingValue n) {
-    final raw = n.text;
+  static String format(String raw) {
+    if (raw.isEmpty) return '';
     String local;
     if (raw.startsWith('+38') || raw.startsWith('380')) {
       local = raw
@@ -2411,7 +2488,12 @@ class _UkrPhoneFmt extends TextInputFormatter {
         }
       }
     }
-    final res = buf.toString();
+    return buf.toString();
+  }
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue o, TextEditingValue n) {
+    final res = format(n.text);
     return TextEditingValue(
       text: res,
       selection: TextSelection.collapsed(offset: res.length),

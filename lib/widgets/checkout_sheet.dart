@@ -80,6 +80,9 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
   String? _selectedCityRef;
   String? _selectedWarehouseIndex; // "цифрова адресса"
   String _warehouseCategory = 'Warehouse'; // 'Warehouse' or 'Postomat'
+  String _oblast = '';
+  String _raion = '';
+  String _settlementType = 'Місто';
 
   @override
   void initState() {
@@ -120,7 +123,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
       if (data == null || !mounted) return;
       _firstNameCtrl.text = data['firstName'] as String? ?? '';
       _secondNameCtrl.text = data['secondName'] as String? ?? '';
-      _phoneCtrl.text = data['phone'] as String? ?? '';
+      _phoneCtrl.text = _UkrainianPhoneFormatter.format(data['phone'] as String? ?? '');
       final delOption = data['deliveryOption'] as String? ?? '';
       if (delOption == 'ukrPoshta') {
         setState(() => _delivery = _Delivery.ukr);
@@ -134,6 +137,9 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
           _selectedCityRef = data['cityRef'] as String?;
           _selectedWarehouseIndex = data['warehouseIndex'] as String?;
           _warehouseCategory = data['postType'] as String? ?? 'Warehouse';
+          _oblast = data['oblast'] as String? ?? '';
+          _raion = data['raion'] as String? ?? '';
+          _settlementType = data['settlementType'] as String? ?? 'Місто';
         });
         _novaCityCtrl.text = city;
         _novaWarehouseCtrl.text = warehouse;
@@ -296,6 +302,9 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
           'city': _ukrCityCtrl.text.trim(),
           'cityIndex': _ukrIndexCtrl.text.trim(),
         },
+        'oblast': _oblast,
+        'raion': _raion,
+        'settlementType': _settlementType,
       };
 
       // Fetch the next orderId (matches web: orders collection, ordered by orderId)
@@ -354,8 +363,9 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
         'orderStatus': 'Processing',
         'paymentStatus': paymentMethod == 'liqpay' ? 'success' : 'pending',
         'userType': 'authenticated',
-        'oblast': '',
-        'raion': '',
+        'oblast': _oblast,
+        'raion': _raion,
+        'settlementType': _settlementType,
         'time': _formatOrderTime(DateTime.now()),
         'orderOnApp': true,
       };
@@ -455,6 +465,9 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
       _novaWarehouseCtrl.clear();
       _selectedWarehouseIndex = null;
       _warehouseSuggestions = [];
+      _oblast = city['AreaDescription'] ?? '';
+      _raion = city['RegionsDescription'] ?? '';
+      _settlementType = city['SettlementTypeDescription'] ?? 'Місто';
     });
 
     // Resolve CityRef for warehouses
@@ -539,7 +552,7 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                 if (_showPaymentOptions) {
                   final contactName = '${_firstNameCtrl.text} ${_secondNameCtrl.text}';
                   final deliveryText = _delivery == _Delivery.nova
-                      ? 'Нова Пошта: ${_novaCityCtrl.text}, ${_novaWarehouseCtrl.text}'
+                      ? 'Нова Пошта: ${[_raion.isNotEmpty ? '$_raion р-н' : '', _oblast, _novaCityCtrl.text].where((s) => s.isNotEmpty).join(', ')}, ${_novaWarehouseCtrl.text}'
                       : 'Укрпошта: ${_ukrCityCtrl.text}, Індекс ${_ukrIndexCtrl.text}';
                   
                   return PaymentOptionsView(
@@ -790,6 +803,9 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                                           setState(() => _warehouseCategory = c);
                                           if (_selectedCityRef != null) _fetchWarehouses('', _selectedCityRef!);
                                         },
+                                        oblast: _oblast,
+                                        raion: _raion,
+                                        settlementType: _settlementType,
                                       )
                                     : UkrFields(
                                         key: const ValueKey('ukr'),
@@ -1071,59 +1087,45 @@ class _CyrillicNameFormatter extends TextInputFormatter {
 // Formats input live as: +38 (0XX) XXX XXXX
 
 class _UkrainianPhoneFormatter extends TextInputFormatter {
+  static String format(String raw) {
+    if (raw.isEmpty) return '';
+    String local;
+    if (raw.startsWith('+38') || raw.startsWith('380')) {
+      local = raw
+          .replaceFirst(RegExp(r'^\+?38[\s(]*'), '')
+          .replaceAll(RegExp(r'\D'), '');
+    } else {
+      local = raw.replaceAll(RegExp(r'\D'), '');
+    }
+    if (local.length >= 2 && !local.startsWith('0')) local = '0$local';
+    if (local.length > 10) local = local.substring(0, 10);
+    final buf = StringBuffer('+38 ');
+    if (local.isNotEmpty) {
+      buf.write('(');
+      if (local.length <= 3) {
+        buf.write(local);
+      } else {
+        buf.write('${local.substring(0, 3)}) ');
+        if (local.length <= 6) {
+          buf.write(local.substring(3));
+        } else {
+          buf.write('${local.substring(3, 6)} ');
+          buf.write(local.substring(6));
+        }
+      }
+    }
+    return buf.toString();
+  }
+
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final rawText = newValue.text;
-
-    // ── Strip the display prefix at TEXT level ────────────────────────────────
-    // The formatted output always starts with "+38 (" so we strip it first.
-    // This prevents the "38" from the visual prefix from being extracted as
-    // digits and incorrectly treated as (part of) the country code.
-    String localDigits;
-    if (rawText.startsWith('+38') || rawText.startsWith('380')) {
-      // Remove "+38 (", "+38(", "380", "+38" etc. from the start
-      final afterPrefix = rawText.replaceFirst(RegExp(r'^\+?38[\s(]*'), '');
-      localDigits = afterPrefix.replaceAll(RegExp(r'\D'), '');
-    } else {
-      // Field is being typed fresh (no prefix yet) — just get digits
-      localDigits = rawText.replaceAll(RegExp(r'\D'), '');
-    }
-
-    // ── Ensure operator code starts with '0' ─────────────────────────────────
-    // Ukrainian codes: 050, 063, 066–068, 073, 091–099, etc. — all start with 0.
-    // If user typed "68..." auto-prefix to "068...".
-    // Wait until ≥2 digits so a lone "6" isn't prematurely forced to "06".
-    if (localDigits.length >= 2 && !localDigits.startsWith('0')) {
-      localDigits = '0$localDigits';
-    }
-
-    // ── Clamp to 10 local digits ──────────────────────────────────────────────
-    if (localDigits.length > 10) localDigits = localDigits.substring(0, 10);
-
-    // ── Build formatted string: +38 (0XX) XXX XXXX ───────────────────────────
-    final buf = StringBuffer('+38 ');
-    if (localDigits.isNotEmpty) {
-      buf.write('(');
-      if (localDigits.length <= 3) {
-        buf.write(localDigits);
-      } else {
-        buf.write('${localDigits.substring(0, 3)}) ');
-        if (localDigits.length <= 6) {
-          buf.write(localDigits.substring(3));
-        } else {
-          buf.write('${localDigits.substring(3, 6)} ');
-          buf.write(localDigits.substring(6));
-        }
-      }
-    }
-
-    final result = buf.toString();
+    final res = format(newValue.text);
     return TextEditingValue(
-      text: result,
-      selection: TextSelection.collapsed(offset: result.length),
+      text: res,
+      selection: TextSelection.collapsed(offset: res.length),
     );
   }
 }

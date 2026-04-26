@@ -226,6 +226,9 @@ class NovaFields extends StatelessWidget {
     required this.onWarehouseSelect,
     required this.category,
     required this.onCategoryChange,
+    this.oblast,
+    this.raion,
+    this.settlementType,
   });
 
   final TextEditingController cityCtrl;
@@ -247,6 +250,9 @@ class NovaFields extends StatelessWidget {
   final Function(dynamic) onWarehouseSelect;
   final String category;
   final Function(String) onCategoryChange;
+  final String? oblast;
+  final String? raion;
+  final String? settlementType;
 
   @override
   Widget build(BuildContext context) {
@@ -258,7 +264,9 @@ class NovaFields extends StatelessWidget {
         InputCard(
           controller: cityCtrl,
           focusNode: cityFocus,
-          label: 'Населений пункт',
+          label: (settlementType != null && settlementType!.isNotEmpty)
+              ? settlementType!
+              : 'Населений пункт',
           icon: Icons.location_city_outlined,
           isDark: isDark,
           cardBg: cardBg,
@@ -302,6 +310,18 @@ class NovaFields extends StatelessWidget {
                     style: TextStyle(color: subCol, fontSize: 11),
                   ),
               ],
+            ),
+          ),
+        if ((oblast != null && oblast!.isNotEmpty) || (raion != null && raion!.isNotEmpty))
+          Padding(
+            padding: const EdgeInsets.only(top: 8, left: 16),
+            child: Text(
+              '${raion != null && raion!.isNotEmpty ? '$raion р-н, ' : ''}${oblast ?? ''}${oblast != null && !oblast!.contains('обл') ? ' обл.' : ''}',
+              style: TextStyle(
+                color: green.withValues(alpha: 0.8),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         const SizedBox(height: 12),
