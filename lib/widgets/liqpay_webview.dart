@@ -78,7 +78,7 @@ class _LiqPayWebViewState extends State<LiqPayWebView> {
           WebViewWidget(controller: _controller),
           if (_isLoading)
             const Center(
-              child: CircularProgressIndicator(color: Color(0xFF8CAF7B)),
+              child: CircularProgressIndicator(color: Color(0xFFE8734A)),
             ),
         ],
       ),

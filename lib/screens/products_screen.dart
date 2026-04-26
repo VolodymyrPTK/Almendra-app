@@ -135,7 +135,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                   Icons.shopping_bag_outlined,
                                   size: 20,
                                   color: hasItems
-                                      ? const Color(0xFF8CAF7B)
+                                      ? const Color(0xFFE8734A)
                                       : (isDark
                                             ? Colors.white
                                             : const Color(0xFF3B3228)),
@@ -148,7 +148,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
-                                        color: Color(0xFF8CAF7B),
+                                        color: Color(0xFFE8734A),
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.visible,

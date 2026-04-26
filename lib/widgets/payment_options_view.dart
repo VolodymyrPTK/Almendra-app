@@ -36,7 +36,7 @@ class _PaymentOptionsViewState extends State<PaymentOptionsView> {
     final subCol = widget.isDark ? Colors.white70 : const Color(0xFF5A5047);
     final cardBg = widget.isDark ? const Color(0xFF2A2420) : Colors.white;
     final borderCol = widget.isDark ? Colors.white12 : const Color(0xFFDDD6CC);
-    final highlightCol = const Color(0xFF8CAF7B);
+    final highlightCol = const Color(0xFFE8734A);
 
     return Column(
       children: [

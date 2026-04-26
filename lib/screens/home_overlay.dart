@@ -90,7 +90,7 @@ class HomeOverlay extends StatelessWidget {
                           subtitle: 'Продукти',
                           imageAsset: 'assets/filtericons/sugar-free.webp',
                           color: isDark
-                              ? const Color(0xFF4A341F)
+                              ? const Color(0xFF644329)
                               : const Color(0xFFFFDFB5),
                           onTap: () {
                             _applyFilterAndHide(context, 'freeSugar');
@@ -101,7 +101,7 @@ class HomeOverlay extends StatelessWidget {
                           subtitle: 'Продукти',
                           imageAsset: 'assets/filtericons/gluten-free.webp',
                           color: isDark
-                              ? const Color(0xFF1E4024)
+                              ? const Color(0xFF285430)
                               : const Color(0xFFC3F0CA),
                           onTap: () {
                             _applyFilterAndHide(context, 'freeGluten');
@@ -112,7 +112,7 @@ class HomeOverlay extends StatelessWidget {
                           subtitle: 'Продукти',
                           imageAsset: 'assets/filtericons/vegan.webp',
                           color: isDark
-                              ? const Color(0xFF1C3A4F)
+                              ? const Color(0xFF26506D)
                               : const Color(0xFFCBEBFE),
                           onTap: () {
                             _applyFilterAndHide(context, 'vegan');
@@ -123,7 +123,7 @@ class HomeOverlay extends StatelessWidget {
                           subtitle: 'Продукти',
                           imageAsset: 'assets/filtericons/lowcalories.webp',
                           color: isDark
-                              ? const Color(0xFF453F1B)
+                              ? const Color(0xFF5C5424)
                               : const Color(0xFFFBEFA5),
                           onTap: () {
                             _applyFilterAndHide(context, 'lowKcal');
@@ -134,7 +134,7 @@ class HomeOverlay extends StatelessWidget {
                           subtitle: 'Продукти',
                           imageAsset: 'assets/filtericons/keto.webp',
                           color: isDark
-                              ? const Color(0xFF4D241C)
+                              ? const Color(0xFF6A3127)
                               : const Color(0xFFFFE0D9),
                           onTap: () {
                             _applyFilterAndHide(context, 'keto');
@@ -145,7 +145,7 @@ class HomeOverlay extends StatelessWidget {
                           subtitle: 'Продукти',
                           imageAsset: 'assets/filtericons/protein.webp',
                           color: isDark
-                              ? const Color(0xFF332050)
+                              ? const Color(0xFF452B6D)
                               : const Color(0xFFE5D5FF),
                           onTap: () {
                             _applyFilterAndHide(context, 'proteinik');
@@ -215,6 +215,8 @@ class _CatalogButton extends StatelessWidget {
                 width: 50,
                 height: 50,
                 fit: BoxFit.contain,
+                color: isDark ? Colors.white : null,
+                colorBlendMode: isDark ? BlendMode.srcIn : null,
               ),
               Text(
                 'Каталог Всіх Продуктів',
@@ -280,6 +282,8 @@ class _FilterCard extends StatelessWidget {
                 width: 56,
                 height: 56,
                 fit: BoxFit.contain,
+                color: isDark ? Colors.white : null,
+                colorBlendMode: isDark ? BlendMode.srcIn : null,
               ),
               const SizedBox(height: 12),
               Text(

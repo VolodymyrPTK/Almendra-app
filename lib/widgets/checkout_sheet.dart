@@ -857,14 +857,14 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
                                 decoration: BoxDecoration(
                                   color: _isLoading
                                       ? const Color(
-                                          0xFF8CAF7B,
+                                          0xFFE8734A,
                                         ).withValues(alpha: 0.6)
-                                      : const Color(0xFF8CAF7B),
+                                      : const Color(0xFFE8734A),
                                   borderRadius: BorderRadius.circular(25),
                                   boxShadow: [
                                     BoxShadow(
                                       color: const Color(
-                                        0xFF8CAF7B,
+                                        0xFFE8734A,
                                       ).withValues(alpha: 0.4),
                                       blurRadius: 14,
                                       offset: const Offset(0, 5),
@@ -984,13 +984,13 @@ class _SuccessView extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF8CAF7B).withValues(alpha: 0.15),
+                color: const Color(0xFFE8734A).withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.check_circle_outline_rounded,
                 size: 44,
-                color: Color(0xFF8CAF7B),
+                color: Color(0xFFE8734A),
               ),
             ),
             const SizedBox(height: 20),
@@ -1018,11 +1018,11 @@ class _SuccessView extends StatelessWidget {
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8CAF7B),
+                  color: const Color(0xFFE8734A),
                   borderRadius: BorderRadius.circular(25),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF8CAF7B).withValues(alpha: 0.4),
+                      color: const Color(0xFFE8734A).withValues(alpha: 0.4),
                       blurRadius: 14,
                       offset: const Offset(0, 5),
                     ),

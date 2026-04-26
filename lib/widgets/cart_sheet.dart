@@ -295,7 +295,7 @@ class _ItemCard extends StatelessWidget {
                                   ),
                                 ),
                                 _PillBtn(label: '+', onTap: onIncrement,
-                                    color: const Color(0xFF8CAF7B)),
+                                    color: const Color(0xFFE8734A)),
                               ],
                             ),
                           ),
@@ -464,15 +464,15 @@ class _OutlineBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const accentGreen = Color(0xFF8CAF7B);
+    const accentOrange = Color(0xFFE8734A);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 44,
         decoration: BoxDecoration(
-          color: filled ? accentGreen : Colors.transparent,
+          color: filled ? accentOrange : Colors.transparent,
           border: Border.all(
-            color: filled ? accentGreen : borderCol,
+            color: filled ? accentOrange : borderCol,
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(22),
@@ -507,7 +507,7 @@ class _EmptyCart extends StatelessWidget {
         children: [
           Icon(Icons.shopping_bag_outlined,
               size: 60,
-              color: const Color(0xFF8CAF7B).withValues(alpha: 0.4)),
+              color: const Color(0xFFE8734A).withValues(alpha: 0.4)),
           const SizedBox(height: 14),
           Text('Кошик порожній',
               style: TextStyle(
@@ -538,7 +538,7 @@ class _NotLoggedIn extends StatelessWidget {
           children: [
             Icon(Icons.lock_outline_rounded,
                 size: 52,
-                color: const Color(0xFF8CAF7B).withValues(alpha: 0.4)),
+                color: const Color(0xFFE8734A).withValues(alpha: 0.4)),
             const SizedBox(height: 14),
             Text('Увійдіть в акаунт',
                 style: TextStyle(
@@ -559,7 +559,7 @@ class _NotLoggedIn extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 32, vertical: 13),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8CAF7B),
+                  color: const Color(0xFFE8734A),
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: const Text(

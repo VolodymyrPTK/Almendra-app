@@ -177,17 +177,17 @@ class MiniTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const green = Color(0xFF8CAF7B);
+    const orange = Color(0xFFE8734A);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? green.withValues(alpha: 0.1) : cardBg,
+          color: selected ? orange.withValues(alpha: 0.1) : cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? green : borderCol,
+            color: selected ? orange : borderCol,
             width: 1.2,
           ),
         ),
@@ -196,7 +196,7 @@ class MiniTab extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: selected ? green : (isDark ? Colors.white60 : Colors.black54),
+            color: selected ? orange : (isDark ? Colors.white60 : Colors.black54),
           ),
         ),
       ),
@@ -256,7 +256,7 @@ class NovaFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const green = Color(0xFF8CAF7B);
+    const orange = Color(0xFFE8734A);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -281,7 +281,7 @@ class NovaFields extends StatelessWidget {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(green),
+                    valueColor: AlwaysStoppedAnimation(orange),
                   ),
                 )
               : null,
@@ -318,7 +318,7 @@ class NovaFields extends StatelessWidget {
             child: Text(
               '${raion != null && raion!.isNotEmpty ? '$raion р-н, ' : ''}${oblast ?? ''}${oblast != null && !oblast!.contains('обл') ? ' обл.' : ''}',
               style: TextStyle(
-                color: green.withValues(alpha: 0.8),
+                color: orange.withValues(alpha: 0.8),
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -365,7 +365,7 @@ class NovaFields extends StatelessWidget {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(green),
+                    valueColor: AlwaysStoppedAnimation(orange),
                   ),
                 )
               : null,
@@ -470,23 +470,23 @@ class DeliveryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const green = Color(0xFF8CAF7B);
+    const orange = Color(0xFFE8734A);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? green.withValues(alpha: 0.12) : cardBg,
+          color: selected ? orange.withValues(alpha: 0.12) : cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? green : borderCol,
+            color: selected ? orange : borderCol,
             width: selected ? 2.0 : 1.2,
           ),
           boxShadow: [
             BoxShadow(
               color: selected
-                  ? green.withValues(alpha: 0.20)
+                  ? orange.withValues(alpha: 0.20)
                   : Colors.black.withValues(alpha: isDark ? 0.22 : 0.05),
               blurRadius: 10,
               offset: const Offset(0, 3),
@@ -499,7 +499,7 @@ class DeliveryChip extends StatelessWidget {
             Icon(
               icon,
               size: 18,
-              color: selected ? green : titleCol.withValues(alpha: 0.6),
+              color: selected ? orange : titleCol.withValues(alpha: 0.6),
             ),
             const SizedBox(width: 8),
             Flexible(
@@ -508,7 +508,7 @@ class DeliveryChip extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: selected ? green : titleCol,
+                  color: selected ? orange : titleCol,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
